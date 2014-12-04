@@ -27,6 +27,7 @@ ament_target_dependencies(ros_middleware_connext_cpp
   "rosidl_generator_cpp"
   "rosidl_typesupport_connext_cpp"
   "Connext")
+configure_ros_middleware_library(ros_middleware_connext_cpp)
 
 ament_export_libraries(ros_middleware_connext_cpp ${Connext_LIBRARIES})
 
