@@ -37,7 +37,7 @@ if(NOT "$ENV{NDDSHOME} " STREQUAL " ")
   set(_lib_path "$ENV{NDDSHOME}/lib")
   file(GLOB_RECURSE _libs
     RELATIVE "${_lib_path}"
-    "$ENV{NDDSHOME}/lib/*/libnddscpp.so")
+    "$ENV{NDDSHOME}/lib/libnddscpp.so")
 
   # remove libraries from non-matching platforms
   set(_i 0)
@@ -80,10 +80,10 @@ if(NOT "$ENV{NDDSHOME} " STREQUAL " ")
   endwhile()
 
   if("${_libs} " STREQUAL " ")
-    message(FATAL_ERROR "NNDSHOME set to '$ENV{NDDSHOME}' but could not find 'libnddscpp.so' under '${_lib_path}'")
+    message(FATAL_ERROR "NDDSHOME set to '$ENV{NDDSHOME}' but could not find 'libnddscpp.so' under '${_lib_path}'")
   endif()
   if(_length GREATER 1)
-    message(FATAL_ERROR "NNDSHOME set to '$ENV{NDDSHOME}' but found multiple files named 'libnddscpp.so' under '${_lib_path}': ${_libs}")
+    message(FATAL_ERROR "NDDSHOME set to '$ENV{NDDSHOME}' but found multiple files named 'libnddscpp.so' under '${_lib_path}': ${_libs}")
   endif()
 
   list(GET _libs 0 _lib)
