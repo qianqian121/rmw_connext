@@ -2180,6 +2180,9 @@ rmw_create_client(
       goto fail;
     }
 
+    // NOTE(esteve): force transient durability
+    datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
+
     connext::RequesterParams requester_params(participant);
     requester_params.service_name(service_name);
     requester_params.request_type_support(request_type_support);
@@ -2536,6 +2539,9 @@ rmw_create_service(
       // error string was set within the function
       goto fail;
     }
+
+    // NOTE(esteve): force transient durability
+    datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
     // create requester
     connext::ReplierParams<DDS_DynamicData, DDS_DynamicData> replier_params(participant);

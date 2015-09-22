@@ -843,6 +843,9 @@ rmw_create_client(
     goto fail;
   }
 
+  // NOTE(esteve): force transient durability
+  datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
+
   requester = callbacks->create_requester(
     participant, service_name, &datareader_qos, &datawriter_qos,
     reinterpret_cast<void **>(&response_datareader));
@@ -1024,6 +1027,9 @@ rmw_create_service(
     // error string was set within the function
     goto fail;
   }
+
+  // NOTE(esteve): force transient durability
+  datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
   replier = callbacks->create_replier(
     participant, service_name, &datareader_qos, &datawriter_qos,
