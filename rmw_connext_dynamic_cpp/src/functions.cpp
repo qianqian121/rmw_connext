@@ -2181,6 +2181,7 @@ rmw_create_client(
     }
 
     // NOTE(esteve): force transient durability
+    datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
     datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
     connext::RequesterParams requester_params(participant);
@@ -2542,6 +2543,7 @@ rmw_create_service(
 
     // NOTE(esteve): force transient durability
     datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
+    datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
     // create requester
     connext::ReplierParams<DDS_DynamicData, DDS_DynamicData> replier_params(participant);

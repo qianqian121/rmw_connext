@@ -844,6 +844,7 @@ rmw_create_client(
   }
 
   // NOTE(esteve): force transient durability
+  datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
   datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
   requester = callbacks->create_requester(
@@ -1030,6 +1031,7 @@ rmw_create_service(
 
   // NOTE(esteve): force transient durability
   datareader_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
+  datawriter_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
 
   replier = callbacks->create_replier(
     participant, service_name, &datareader_qos, &datawriter_qos,
