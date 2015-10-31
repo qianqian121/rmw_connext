@@ -186,6 +186,11 @@ else()
     "/wd4701"
   )
 endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(_target_compile_flags "${_target_compile_flags} -Wl,--allow-shlib-undefined")
+endif()
+
 string(REPLACE ";" " " _target_compile_flags "${_target_compile_flags}")
 set_target_properties(${rosidl_generate_interfaces_TARGET}${_target_suffix}
   PROPERTIES COMPILE_FLAGS ${_target_compile_flags})
