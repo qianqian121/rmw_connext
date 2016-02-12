@@ -97,7 +97,6 @@ struct CustomSubscriberInfo
   DDSSubscriber * dds_subscriber_;
   bool ignore_local_publications;
   DDS_TypeCode * type_code_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * members_;
   const void * untyped_members_;
   DDS_DynamicData * dynamic_data;
 };
@@ -114,8 +113,6 @@ struct ConnextDynamicServiceInfo
   DDS_TypeCode * request_type_code_;
   const void * untyped_request_members_;
   const void * untyped_response_members_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * request_members_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * response_members_;
 };
 
 struct ConnextDynamicClientInfo
@@ -130,8 +127,6 @@ struct ConnextDynamicClientInfo
   DDS_TypeCode * request_type_code_;
   const void * untyped_request_members_;
   const void * untyped_response_members_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * request_members_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * response_members_;
 };
 
 
@@ -161,7 +156,6 @@ bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
   } \
   package_name = members->package_name_;\
   message_name = members->message_name_;
-
 
 
 ROSIDL_TYPESUPPORT_INTROSPECTION_CPP_LOCAL
@@ -1033,7 +1027,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
   }
 
 #define PUBLISH(INTROSPECTION_TYPE) \
-  auto members = static_cast<const INTROSPECTION_TYPE(MessageMember) *>(untyped_members);\
+  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members);\
   if (!members) {\
     RMW_SET_ERROR_MSG("Wrong MessageMember type received")\
     return false;\
@@ -1855,7 +1849,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
   }
 
 #define TAKE(INTROSPECTION_TYPE)\
-  auto members = static_cast<const INTROSPECTION_TYPE(MessageMember) *>(untyped_members);\
+  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members);\
   if (!members) {\
     RMW_SET_ERROR_MSG("Wrong MessageMember type received")\
     return false;\
@@ -1962,7 +1956,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
 
 
 bool _take(DDS_DynamicData * dynamic_data, void * ros_message,
-  const void * untyped_members)
+  const void * untyped_members, const char * typesupport)
 {
   if (using_introspection_c_typesupport(typesupport)) {
     TAKE(INTROSPECTION_C_TYPE)
@@ -1972,6 +1966,7 @@ bool _take(DDS_DynamicData * dynamic_data, void * ros_message,
     RMW_SET_ERROR_MSG("Invalid typesupport handle")
     return false;
   }
+  return true;
 }
 
 rmw_ret_t
@@ -2934,7 +2929,7 @@ rmw_take_request(
 
   connext::LoanedSamples<DDS::DynamicData> requests = replier->take_requests(1);
   if (requests.begin() != requests.end() && requests.begin()->info().valid_data) {
-    bool success = _take(&requests.begin()->data(), ros_request, service_info->request_members_), service_info->typesupport_identifier;
+    bool success = _take(&requests.begin()->data(), ros_request, service_info->request_members_, service_info->typesupport_identifier);
     if (!success) {
       // error string was set within the function
       return RMW_RET_ERROR;
