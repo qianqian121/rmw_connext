@@ -69,7 +69,6 @@
 // place, overloading produces an error rather than a new C++ symbol.
 extern "C"
 {
-
 ROSIDL_TYPESUPPORT_INTROSPECTION_CPP_EXPORT
 const char * rti_connext_dynamic_identifier = "connext_dynamic";
 
@@ -81,7 +80,6 @@ struct CustomPublisherInfo
   DDSDataWriter * data_writer_;
   DDSDynamicDataWriter * dynamic_writer_;
   DDS_TypeCode * type_code_;
-  //const rosidl_typesupport_introspection_cpp::MessageMembers * members_;
   const void * untyped_members_;
   DDS_DynamicData * dynamic_data;
   rmw_gid_t publisher_gid;
@@ -143,7 +141,7 @@ bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
 }
 
 // Two different kinds of concatenation are needed for these namespaces
-#define INTROSPECTION_CPP_TYPE(A) rosidl_typesupport_introspection_cpp:: A
+#define INTROSPECTION_CPP_TYPE(A) rosidl_typesupport_introspection_cpp::A
 
 #define INTROSPECTION_C_TYPE(A) rosidl_typesupport_introspection_c__ ## A
 
@@ -152,7 +150,7 @@ bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
   if (!members) { \
     return ""; \
   } \
-  package_name = members->package_name_;\
+  package_name = members->package_name_; \
   message_name = members->message_name_;
 
 
@@ -322,7 +320,8 @@ destroy_type_code(DDS_TypeCode * type_code)
     if (member->is_array_) { \
       if (member->array_size_) { \
         if (member->array_size_ > (std::numeric_limits<DDS_UnsignedLong>::max)()) { \
-          RMW_SET_ERROR_MSG("failed to create array typecode since the size exceeds the DDS type"); \
+          RMW_SET_ERROR_MSG( \
+            "failed to create array typecode since the size exceeds the DDS type"); \
           goto fail; \
         } \
         DDS_UnsignedLong array_size = static_cast<DDS_UnsignedLong>(member->array_size_); \
@@ -471,7 +470,7 @@ rmw_create_publisher(
     return NULL;
   }
 
-  // TODO error propagation from create_type_name
+  // TODO(jacquelinekay) error propagation from create_type_name
   std::string type_name = _create_type_name(
     type_support->data, "msg", type_support->typesupport_identifier);
 
@@ -758,7 +757,10 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
         }
         custom_publisher_info->dynamic_data = nullptr;
       }
-      std::string type_name = _create_type_name(custom_publisher_info->untyped_members_, "msg", custom_publisher_info->typesupport_identifier);
+      std::string type_name = _create_type_name(
+        custom_publisher_info->untyped_members_,
+        "msg",
+        custom_publisher_info->typesupport_identifier);
       // TODO(wjwwood) Cannot unregister and free type here, in case another topic is using the
       // same type.
       // Should be cleaned up when the node is destroyed.
@@ -1026,104 +1028,104 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
   }
 
 #define PUBLISH(INTROSPECTION_TYPE) \
-  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members);\
-  if (!members) {\
-    RMW_SET_ERROR_MSG("Wrong MessageMember type received")\
-    return false;\
-  }\
-  for (uint32_t i = 0; i < members->member_count_; ++i) {\
-    const INTROSPECTION_TYPE(MessageMember) * member = members->members_ + i;\
-    switch (member->type_id_) {\
-      case INTROSPECTION_TYPE(ROS_TYPE_BOOL):\
-        SET_VALUE_WITH_BOOL_TYPE(bool, DDS_Boolean, set_boolean, set_boolean_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_BYTE):\
-        SET_VALUE(uint8_t, set_octet, set_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_CHAR):\
-        SET_VALUE(char, set_char, set_char_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT32):\
-        SET_VALUE(float, set_float, set_float_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT64):\
-        SET_VALUE(double, set_double, set_double_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT8):\
-        SET_VALUE_WITH_DIFFERENT_TYPES(int8_t, DDS_Octet, set_octet, set_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT8):\
-        SET_VALUE(uint8_t, set_octet, set_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT16):\
-        SET_VALUE(int16_t, set_short, set_short_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT16):\
-        SET_VALUE(uint16_t, set_ushort, set_ushort_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT32):\
-        SET_VALUE(int32_t, set_long, set_long_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT32):\
-        SET_VALUE(uint32_t, set_ulong, set_ulong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT64):\
-        SET_VALUE_WITH_DIFFERENT_TYPES(int64_t, DDS_LongLong, set_longlong, set_longlong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT64):\
-        SET_VALUE_WITH_DIFFERENT_TYPES(\
-          uint64_t, DDS_UnsignedLongLong, set_ulonglong, set_ulonglong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_STRING):\
-        SET_STRING_VALUE(std::string, set_string)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE):\
-        {\
-          if (member->is_array_) {\
-            const void * untyped_member = static_cast<const char *>(ros_message) + member->offset_;\
-            if (!member->size_function) {\
-              RMW_SET_ERROR_MSG("size function handle is null");\
-              return false;\
-            }\
-            if (!member->get_const_function) {\
-              RMW_SET_ERROR_MSG("get const function handle is null");\
-              return false;\
-            }\
-\
-            DDS_DynamicData array_data(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT);\
-            DDS_ReturnCode_t status = dynamic_data->bind_complex_member(\
-              array_data,\
-              NULL,\
-              i + 1);\
-            if (status != DDS_RETCODE_OK) {\
-              RMW_SET_ERROR_MSG("failed to bind complex member");\
-              return false;\
-            }\
-            size_t array_size = member->size_function(untyped_member);\
-            for (size_t j = 0; j < array_size; ++j) {\
-              const void * ros_message;\
-              {\
-                const void * sub_ros_message = member->get_const_function(untyped_member, j);\
-                ros_message = static_cast<const char *>(sub_ros_message) - member->offset_;\
-              }\
-              DDS_DynamicData * array_data_ptr = &array_data;\
-              SET_SUBMESSAGE_VALUE(array_data_ptr, j, INTROSPECTION_TYPE)\
-            }\
-            status = dynamic_data->unbind_complex_member(array_data);\
-            if (status != DDS_RETCODE_OK) {\
-              RMW_SET_ERROR_MSG("failed to unbind complex member");\
-              return false;\
-            }\
-          } else {\
-            SET_SUBMESSAGE_VALUE(dynamic_data, i, INTROSPECTION_TYPE)\
-          }\
-        }\
-        break;\
-      default:\
-        RMW_SET_ERROR_MSG(\
-          (std::string("unknown type id ") + std::to_string(member->type_id_)).c_str());\
-        return false;\
-    }\
+  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members); \
+  if (!members) { \
+    RMW_SET_ERROR_MSG("Wrong MessageMember type received") \
+    return false; \
+  } \
+  for (uint32_t i = 0; i < members->member_count_; ++i) { \
+    const INTROSPECTION_TYPE(MessageMember) * member = members->members_ + i; \
+    switch (member->type_id_) { \
+      case INTROSPECTION_TYPE(ROS_TYPE_BOOL): \
+        SET_VALUE_WITH_BOOL_TYPE(bool, DDS_Boolean, set_boolean, set_boolean_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_BYTE): \
+        SET_VALUE(uint8_t, set_octet, set_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_CHAR): \
+        SET_VALUE(char, set_char, set_char_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT32): \
+        SET_VALUE(float, set_float, set_float_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT64): \
+        SET_VALUE(double, set_double, set_double_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT8): \
+        SET_VALUE_WITH_DIFFERENT_TYPES(int8_t, DDS_Octet, set_octet, set_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT8): \
+        SET_VALUE(uint8_t, set_octet, set_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT16): \
+        SET_VALUE(int16_t, set_short, set_short_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT16): \
+        SET_VALUE(uint16_t, set_ushort, set_ushort_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT32): \
+        SET_VALUE(int32_t, set_long, set_long_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT32): \
+        SET_VALUE(uint32_t, set_ulong, set_ulong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT64): \
+        SET_VALUE_WITH_DIFFERENT_TYPES(int64_t, DDS_LongLong, set_longlong, set_longlong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT64): \
+        SET_VALUE_WITH_DIFFERENT_TYPES( \
+          uint64_t, DDS_UnsignedLongLong, set_ulonglong, set_ulonglong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
+        SET_STRING_VALUE(std::string, set_string) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
+        { \
+          if (member->is_array_) { \
+            const void * untyped_member = static_cast<const char *>( \
+              ros_message) + member->offset_; \
+            if (!member->size_function) { \
+              RMW_SET_ERROR_MSG("size function handle is null"); \
+              return false; \
+            } \
+            if (!member->get_const_function) { \
+              RMW_SET_ERROR_MSG("get const function handle is null"); \
+              return false; \
+            } \
+            DDS_DynamicData array_data(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
+            DDS_ReturnCode_t status = dynamic_data->bind_complex_member( \
+              array_data, \
+              NULL, \
+              i + 1); \
+            if (status != DDS_RETCODE_OK) { \
+              RMW_SET_ERROR_MSG("failed to bind complex member"); \
+              return false; \
+            } \
+            size_t array_size = member->size_function(untyped_member); \
+            for (size_t j = 0; j < array_size; ++j) { \
+              const void * ros_message; \
+              { \
+                const void * sub_ros_message = member->get_const_function(untyped_member, j); \
+                ros_message = static_cast<const char *>(sub_ros_message) - member->offset_; \
+              } \
+              DDS_DynamicData * array_data_ptr = &array_data; \
+              SET_SUBMESSAGE_VALUE(array_data_ptr, j, INTROSPECTION_TYPE) \
+            } \
+            status = dynamic_data->unbind_complex_member(array_data); \
+            if (status != DDS_RETCODE_OK) { \
+              RMW_SET_ERROR_MSG("failed to unbind complex member"); \
+              return false; \
+            } \
+          } else { \
+            SET_SUBMESSAGE_VALUE(dynamic_data, i, INTROSPECTION_TYPE) \
+          } \
+        } \
+        break; \
+      default: \
+        RMW_SET_ERROR_MSG( \
+          (std::string("unknown type id ") + std::to_string(member->type_id_)).c_str()); \
+        return false; \
+    } \
   }
 
 
@@ -1131,6 +1133,10 @@ bool _publish(
   DDS_DynamicData * dynamic_data, const void * ros_message,
   const void * untyped_members, const char * typesupport)
 {
+  if (!typesupport) {
+    RMW_SET_ERROR_MSG("Invalid typesupport handle")
+    return false;
+  }
   if (using_introspection_c_typesupport(typesupport)) {
     PUBLISH(INTROSPECTION_C_TYPE)
   } else if (using_introspection_cpp_typesupport(typesupport)) {
@@ -1192,7 +1198,10 @@ rmw_publish(const rmw_publisher_t * publisher, const void * ros_message)
     return RMW_RET_ERROR;
   }
   bool published = _publish(
-    dynamic_data, ros_message, publisher_info->untyped_members_, publisher_info->typesupport_identifier);
+    dynamic_data,
+    ros_message,
+    publisher_info->untyped_members_,
+    publisher_info->typesupport_identifier);
   if (!published) {
     // error string was set within the function
     return RMW_RET_ERROR;
@@ -1536,7 +1545,10 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
         }
         custom_subscription_info->dynamic_data = nullptr;
       }
-      std::string type_name = _create_type_name(custom_subscription_info->untyped_members_, "msg", custom_subscription_info->typesupport_identifier);
+      std::string type_name = _create_type_name(
+        custom_subscription_info->untyped_members_,
+        "msg",
+        custom_subscription_info->typesupport_identifier);
       // TODO(wjwwood) Cannot unregister and free type here, in case another topic is using the
       // same type.
       // Should be cleaned up when the node is destroyed.
@@ -1848,116 +1860,119 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
     return false; \
   }
 
-#define TAKE(INTROSPECTION_TYPE)\
-  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members);\
-  if (!members) {\
-    RMW_SET_ERROR_MSG("Wrong MessageMember type received")\
-    return false;\
-  }\
-  for (uint32_t i = 0; i < members->member_count_; ++i) {\
-    const INTROSPECTION_TYPE(MessageMember) * member = members->members_ + i;\
-    switch (member->type_id_) {\
-      case INTROSPECTION_TYPE(ROS_TYPE_BOOL):\
-        GET_VALUE_WITH_BOOL_TYPE(bool, DDS_Boolean, get_boolean, get_boolean_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_BYTE):\
-        GET_VALUE(uint8_t, get_octet, get_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_CHAR):\
-        GET_VALUE(char, get_char, get_char_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT32):\
-        GET_VALUE(float, get_float, get_float_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT64):\
-        GET_VALUE(double, get_double, get_double_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT8):\
-        GET_VALUE_WITH_DIFFERENT_TYPES(int8_t, DDS_Octet, get_octet, get_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT8):\
-        GET_VALUE(uint8_t, get_octet, get_octet_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT16):\
-        GET_VALUE(int16_t, get_short, get_short_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT16):\
-        GET_VALUE(uint16_t, get_ushort, get_ushort_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT32):\
-        GET_VALUE(int32_t, get_long, get_long_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT32):\
-        GET_VALUE(uint32_t, get_ulong, get_ulong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_INT64):\
-        GET_VALUE_WITH_DIFFERENT_TYPES(int64_t, DDS_LongLong, get_longlong, get_longlong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_UINT64):\
-        GET_VALUE_WITH_DIFFERENT_TYPES(\
-          uint64_t, DDS_UnsignedLongLong, get_ulonglong, get_ulonglong_array)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_STRING):\
-        GET_STRING_VALUE(std::string, get_string)\
-        break;\
-      case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE):\
-        {\
-          if (member->is_array_) {\
-            void * untyped_member = static_cast<char *>(ros_message) + member->offset_;\
-            if (!member->array_size_ || member->is_upper_bound_) {\
-              if (!member->resize_function) {\
-                RMW_SET_ERROR_MSG("resize function handle is null");\
-                return false;\
-              }\
-            }\
-            if (!member->get_function) {\
-              RMW_SET_ERROR_MSG("get function handle is null");\
-              return false;\
-            }\
-\
-            ARRAY_SIZE()\
-            DDS_DynamicData array_data(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT);\
-            DDS_ReturnCode_t status = dynamic_data->bind_complex_member(\
-              array_data,\
-              NULL,\
-              i + 1);\
-            if (status != DDS_RETCODE_OK) {\
-              RMW_SET_ERROR_MSG("failed to bind complex member");\
-              return false;\
-            }\
-            if (!member->array_size_ || member->is_upper_bound_) {\
-              member->resize_function(untyped_member, array_size);\
-            }\
-            for (size_t j = 0; j < array_size; ++j) {\
-              void * ros_message;\
-              {\
-                void * sub_ros_message = member->get_function(untyped_member, j);\
-                ros_message = static_cast<char *>(sub_ros_message) - member->offset_;\
-              }\
-              DDS_DynamicData * array_data_ptr = &array_data;\
-              GET_SUBMESSAGE_VALUE(array_data_ptr, j, INTROSPECTION_TYPE)\
-            }\
-            status = dynamic_data->unbind_complex_member(array_data);\
-            if (status != DDS_RETCODE_OK) {\
-              RMW_SET_ERROR_MSG("failed to unbind complex member");\
-              return false;\
-            }\
-          } else {\
-            GET_SUBMESSAGE_VALUE(dynamic_data, i, INTROSPECTION_TYPE)\
-          }\
-        }\
-        break;\
-      default:\
-        RMW_SET_ERROR_MSG(\
-          (std::string("unknown type id ") + std::to_string(member->type_id_)).c_str());\
-        return false;\
-    }\
-  }\
+#define TAKE(INTROSPECTION_TYPE) \
+  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members); \
+  if (!members) { \
+    RMW_SET_ERROR_MSG("Wrong MessageMember type received") \
+    return false; \
+  } \
+  for (uint32_t i = 0; i < members->member_count_; ++i) { \
+    const INTROSPECTION_TYPE(MessageMember) * member = members->members_ + i; \
+    switch (member->type_id_) { \
+      case INTROSPECTION_TYPE(ROS_TYPE_BOOL): \
+        GET_VALUE_WITH_BOOL_TYPE(bool, DDS_Boolean, get_boolean, get_boolean_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_BYTE): \
+        GET_VALUE(uint8_t, get_octet, get_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_CHAR): \
+        GET_VALUE(char, get_char, get_char_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT32): \
+        GET_VALUE(float, get_float, get_float_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_FLOAT64): \
+        GET_VALUE(double, get_double, get_double_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT8): \
+        GET_VALUE_WITH_DIFFERENT_TYPES(int8_t, DDS_Octet, get_octet, get_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT8): \
+        GET_VALUE(uint8_t, get_octet, get_octet_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT16): \
+        GET_VALUE(int16_t, get_short, get_short_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT16): \
+        GET_VALUE(uint16_t, get_ushort, get_ushort_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT32): \
+        GET_VALUE(int32_t, get_long, get_long_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT32): \
+        GET_VALUE(uint32_t, get_ulong, get_ulong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_INT64): \
+        GET_VALUE_WITH_DIFFERENT_TYPES(int64_t, DDS_LongLong, get_longlong, get_longlong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_UINT64): \
+        GET_VALUE_WITH_DIFFERENT_TYPES( \
+          uint64_t, DDS_UnsignedLongLong, get_ulonglong, get_ulonglong_array) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
+        GET_STRING_VALUE(std::string, get_string) \
+        break; \
+      case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
+        { \
+          if (member->is_array_) { \
+            void * untyped_member = static_cast<char *>(ros_message) + member->offset_; \
+            if (!member->array_size_ || member->is_upper_bound_) { \
+              if (!member->resize_function) { \
+                RMW_SET_ERROR_MSG("resize function handle is null"); \
+                return false; \
+              } \
+            } \
+            if (!member->get_function) { \
+              RMW_SET_ERROR_MSG("get function handle is null"); \
+              return false; \
+            } \
+            ARRAY_SIZE() \
+            DDS_DynamicData array_data(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
+            DDS_ReturnCode_t status = dynamic_data->bind_complex_member( \
+              array_data, \
+              NULL, \
+              i + 1); \
+            if (status != DDS_RETCODE_OK) { \
+              RMW_SET_ERROR_MSG("failed to bind complex member"); \
+              return false; \
+            } \
+            if (!member->array_size_ || member->is_upper_bound_) { \
+              member->resize_function(untyped_member, array_size); \
+            } \
+            for (size_t j = 0; j < array_size; ++j) { \
+              void * ros_message; \
+              { \
+                void * sub_ros_message = member->get_function(untyped_member, j); \
+                ros_message = static_cast<char *>(sub_ros_message) - member->offset_; \
+              } \
+              DDS_DynamicData * array_data_ptr = &array_data; \
+              GET_SUBMESSAGE_VALUE(array_data_ptr, j, INTROSPECTION_TYPE) \
+            } \
+            status = dynamic_data->unbind_complex_member(array_data); \
+            if (status != DDS_RETCODE_OK) { \
+              RMW_SET_ERROR_MSG("failed to unbind complex member"); \
+              return false; \
+            } \
+          } else { \
+            GET_SUBMESSAGE_VALUE(dynamic_data, i, INTROSPECTION_TYPE) \
+          } \
+        } \
+        break; \
+      default: \
+        RMW_SET_ERROR_MSG( \
+          (std::string("unknown type id ") + std::to_string(member->type_id_)).c_str()); \
+        return false; \
+    } \
+  }
 
 
 bool _take(DDS_DynamicData * dynamic_data, void * ros_message,
   const void * untyped_members, const char * typesupport)
 {
+  if (!typesupport) {
+    RMW_SET_ERROR_MSG("Invalid typesupport handle")
+    return false;
+  }
   if (using_introspection_c_typesupport(typesupport)) {
     TAKE(INTROSPECTION_C_TYPE)
   } else if (using_introspection_cpp_typesupport(typesupport)) {
@@ -2058,7 +2073,10 @@ _take_impl(const rmw_subscription_t * subscription, void * ros_message, bool * t
   bool success = true;
   if (!ignore_sample) {
     success = _take(
-      &dynamic_data_sequence[0], ros_message, subscriber_info->untyped_members_, subscriber_info->typesupport_identifier);
+      &dynamic_data_sequence[0],
+      ros_message,
+      subscriber_info->untyped_members_,
+      subscriber_info->typesupport_identifier);
     if (success) {
       *taken = true;
     }
@@ -2152,15 +2170,15 @@ rmw_wait(
            wait_timeout);
 }
 
-#define CREATE_CLIENT(INTROSPECTION_TYPE)\
-  auto service_members = static_cast<const INTROSPECTION_TYPE(ServiceMembers) *>(\
-    type_support->data);\
-  if (!service_members) {\
-    RMW_SET_ERROR_MSG("service members handle is null");\
-    return NULL;\
-  }\
-  auto request_members = service_members->request_members_;\
-  auto response_members = service_members->response_members_;\
+#define CREATE_CLIENT(INTROSPECTION_TYPE) \
+  auto service_members = static_cast<const INTROSPECTION_TYPE(ServiceMembers) *>( \
+    type_support->data); \
+  if (!service_members) { \
+    RMW_SET_ERROR_MSG("service members handle is null"); \
+    return NULL; \
+  } \
+  auto request_members = service_members->request_members_; \
+  auto response_members = service_members->response_members_; \
   request_type_name = _create_type_name( \
     request_members, "srv", type_support->typesupport_identifier); \
   response_type_name = _create_type_name( \
@@ -2179,14 +2197,18 @@ rmw_wait(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
+     in the preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     request_type_support, buf, \
     goto fail, \
     DDS::DynamicDataTypeSupport, request_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT) \
   buf = nullptr;  /* Only free the casted pointer; don't need the buf pointer anymore. */ \
  \
-  response_type_code = create_type_code(response_type_name, response_members, type_support->typesupport_identifier); \
+  response_type_code = create_type_code( \
+    response_type_name, \
+    response_members, \
+    type_support->typesupport_identifier); \
   if (!request_type_code) { \
     /* error string was set within the function */ \
     goto fail; \
@@ -2197,7 +2219,8 @@ rmw_wait(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
+     in the preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     response_type_support, buf, \
     goto fail, \
@@ -2206,11 +2229,11 @@ rmw_wait(
  \
   /* create requester */ \
   { \
-    if (!get_datareader_qos(participant, *qos_profile, datareader_qos)) { \
+    if (!get_datareader_qos(participant, * qos_profile, datareader_qos)) { \
       /* error string was set within the function */ \
       goto fail; \
     } \
-    if (!get_datawriter_qos(participant, *qos_profile, datawriter_qos)) { \
+    if (!get_datawriter_qos(participant, * qos_profile, datawriter_qos)) { \
       /* error string was set within the function */ \
       goto fail; \
     } \
@@ -2528,7 +2551,10 @@ rmw_send_request(
   connext::WriteSampleRef<DDS::DynamicData> request(*sample, writeParams);
 
   bool published = _publish(
-    sample, ros_request, client_info->untyped_request_members_, client_info->typesupport_identifier);
+    sample,
+    ros_request,
+    client_info->untyped_request_members_,
+    client_info->typesupport_identifier);
   if (!published) {
     // error string was set within the function
     if (client_info->request_type_support_->delete_data(sample) != DDS_RETCODE_OK) {
@@ -2616,8 +2642,14 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("response members handle is null");
     return NULL;
   }
-  std::string request_type_name = _create_type_name(request_members, "srv", type_support->typesupport_identifier);
-  std::string response_type_name = _create_type_name(response_members, "srv", type_support->typesupport_identifier);
+  std::string request_type_name = _create_type_name(
+    request_members,
+    "srv",
+    type_support->typesupport_identifier);
+  std::string response_type_name = _create_type_name(
+    response_members,
+    "srv",
+    type_support->typesupport_identifier);
 
   DDS_DomainParticipantQos participant_qos;
   DDS_ReturnCode_t status = participant->get_qos(participant_qos);
@@ -2645,7 +2677,10 @@ rmw_create_service(
     goto fail;
   }
 
-  request_type_code = create_type_code(request_type_name, request_members, type_support->typesupport_identifier);
+  request_type_code = create_type_code(
+    request_type_name,
+    request_members,
+    type_support->typesupport_identifier);
   if (!request_type_code) {
     // error string was set within the function
     goto fail;
@@ -2663,7 +2698,10 @@ rmw_create_service(
     DDS::DynamicDataTypeSupport, request_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT)
   buf = nullptr;  // Only free the casted pointer; don't need the buf anymore.
 
-  response_type_code = create_type_code(response_type_name, response_members, type_support->typesupport_identifier);
+  response_type_code = create_type_code(
+    response_type_name,
+    response_members,
+    type_support->typesupport_identifier);
   if (!response_type_code) {
     // error string was set within the function
     goto fail;
@@ -2916,7 +2954,11 @@ rmw_take_request(
 
   connext::LoanedSamples<DDS::DynamicData> requests = replier->take_requests(1);
   if (requests.begin() != requests.end() && requests.begin()->info().valid_data) {
-    bool success = _take(&requests.begin()->data(), ros_request, service_info->untyped_request_members_, service_info->typesupport_identifier);
+    bool success = _take(
+      &requests.begin()->data(),
+      ros_request,
+      service_info->untyped_request_members_,
+      service_info->typesupport_identifier);
     if (!success) {
       // error string was set within the function
       return RMW_RET_ERROR;
@@ -2980,7 +3022,11 @@ rmw_take_response(
 
   connext::LoanedSamples<DDS::DynamicData> replies = requester->take_replies(1);
   if (replies.begin() != replies.end() && replies.begin()->info().valid_data) {
-    bool success = _take(&replies.begin()->data(), ros_response, client_info->untyped_response_members_, client_info->typesupport_identifier);
+    bool success = _take(
+      &replies.begin()->data(),
+      ros_response,
+      client_info->untyped_response_members_,
+      client_info->typesupport_identifier);
     if (!success) {
       // error string was set within the function
       return RMW_RET_ERROR;
@@ -3042,8 +3088,11 @@ rmw_send_response(
   DDS::WriteParams_t writeParams;
   connext::WriteSampleRef<DDS::DynamicData> response(*sample, writeParams);
 
-  // TODO 
-  bool published = _publish(sample, ros_response, service_info->untyped_response_members_, service_info->typesupport_identifier);
+  bool published = _publish(
+    sample,
+    ros_response,
+    service_info->untyped_response_members_,
+    service_info->typesupport_identifier);
   if (!published) {
     // error string was set within the function
     if (service_info->response_type_support_->delete_data(sample) != DDS_RETCODE_OK) {
