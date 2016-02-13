@@ -25,9 +25,9 @@ endif()
 
 find_package(rosidl_typesupport_introspection_c)
 find_package(rosidl_typesupport_introspection_cpp)
-if(NOT rosidl_typesupport_introspection_cpp_FOUND AND NOT rosidl_typesupport_introspection_c_FOUND)
+if(NOT rosidl_typesupport_introspection_c_FOUND AND NOT rosidl_typesupport_introspection_cpp_FOUND)
   ament_package()
-  message(WARNING "Could not find ROSIDL TypeSupport for Connext (rosidl_typesupport_introspection_cpp/c) - skipping '${PROJECT_NAME}'")
+  message(WARNING "Could not find any ROSIDL TypeSupport for Connext (rosidl_typesupport_introspection_cp|cpp) - skipping '${PROJECT_NAME}'")
   return()
 endif()
 
