@@ -1924,7 +1924,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
           RMW_SET_ERROR_MSG("failed to get array value using " #METHOD_NAME); \
           return false; \
         } \
-        bool succeeded = rosidl_generator_c__String__assignn(&ros_values[j], value, size-1); \
+        bool succeeded = rosidl_generator_c__String__assignn(&ros_values[j], value, size - 1); \
         if (!succeeded) { \
           RMW_SET_ERROR_MSG("Failed to assign rosidl_generator_c__String"); \
           return false; \
@@ -1959,7 +1959,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
         RMW_SET_ERROR_MSG("Failed to assign rosidl_generator_c__String"); \
         return false; \
       } \
-      bool succeeded = rosidl_generator_c__String__assignn(ros_value, value, size-1); \
+      bool succeeded = rosidl_generator_c__String__assignn(ros_value, value, size - 1); \
       if (!succeeded) { \
         RMW_SET_ERROR_MSG("Failed to assign value to ROS C string"); \
         return false; \
@@ -2343,8 +2343,7 @@ rmw_wait(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
-     in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     request_type_support, buf, \
     goto fail, \
@@ -2365,8 +2364,7 @@ rmw_wait(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
-     in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     response_type_support, buf, \
     goto fail, \
@@ -2774,8 +2772,7 @@ rmw_send_request(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
-     in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     request_type_support, buf, \
     goto fail, \
@@ -2796,8 +2793,7 @@ rmw_send_request(
     RMW_SET_ERROR_MSG("failed to allocate memory"); \
     goto fail; \
   } \
-  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
-     in the preallocated buffer. */ \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport in preallocated buffer. */ \
   RMW_TRY_PLACEMENT_NEW( \
     response_type_support, buf, \
     goto fail, \
@@ -2805,11 +2801,11 @@ rmw_send_request(
   buf = nullptr;  /* Only free the casted pointer; don't need the buf anymore. */ \
  \
   { \
-    if (!get_datareader_qos(participant, *qos_profile, datareader_qos)) { \
+    if (!get_datareader_qos(participant, * qos_profile, datareader_qos)) { \
       /* error string was set within the function */ \
       goto fail; \
     } \
-    if (!get_datawriter_qos(participant, *qos_profile, datawriter_qos)) { \
+    if (!get_datawriter_qos(participant, * qos_profile, datawriter_qos)) { \
       /* error string was set within the function */ \
       goto fail; \
     } \
