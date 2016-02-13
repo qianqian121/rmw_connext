@@ -48,6 +48,9 @@
 // is in the include/rosidl_typesupport_connext_cpp/impl folder.
 #include "rosidl_generator_cpp/message_type_support.hpp"
 
+#include "rosidl_generator_c/string.h"
+#include "rosidl_generator_c/string_functions.h"
+
 #include "rmw/impl/cpp/macros.hpp"
 
 #include "rosidl_typesupport_introspection_cpp/field_types.hpp"
@@ -937,7 +940,59 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
     } \
   }
 
-#define SET_STRING_VALUE(TYPE, METHOD_NAME) \
+#define SET_C_STRING_VALUE(TYPE, METHOD_NAME) \
+  { \
+    if (member->is_array_) { \
+      DDS_DynamicData dynamic_data_member(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
+      DDS_ReturnCode_t status = dynamic_data->bind_complex_member( \
+        dynamic_data_member, \
+        NULL, \
+        static_cast<DDS_DynamicDataMemberId>(i + 1)); \
+      if (status != DDS_RETCODE_OK) { \
+        RMW_SET_ERROR_MSG("failed to bind complex member"); \
+        return false; \
+      } \
+      ARRAY_SIZE_AND_VALUES(TYPE) \
+      if (array_size > (std::numeric_limits<DDS_DynamicDataMemberId>::max)()) { \
+        RMW_SET_ERROR_MSG( \
+          "failed to set string since the requested string length exceeds the DDS type"); \
+        return false; \
+      } \
+      for (size_t j = 0; j < array_size; ++j) { \
+        status = dynamic_data_member.METHOD_NAME( \
+          NULL, \
+          static_cast<DDS_DynamicDataMemberId>(j + 1), \
+          ros_values[j].data); \
+        if (status != DDS_RETCODE_OK) { \
+          RMW_SET_ERROR_MSG("failed to set array value using " #METHOD_NAME); \
+          return false; \
+        } \
+      } \
+      status = dynamic_data->unbind_complex_member(dynamic_data_member); \
+      if (status != DDS_RETCODE_OK) { \
+        RMW_SET_ERROR_MSG("failed to unbind complex member"); \
+        return false; \
+      } \
+    } else { \
+      auto typed_ros_message = static_cast<const TYPE *>(ros_message); \
+      if (!typed_ros_message) { \
+        RMW_SET_ERROR_MSG("Failed to cast ROS message as TYPE"); \
+        return false; \
+      } \
+      const TYPE * value = reinterpret_cast<const TYPE *>( \
+        typed_ros_message + member->offset_); \
+      DDS_ReturnCode_t status = dynamic_data->METHOD_NAME( \
+        NULL, \
+        static_cast<DDS_DynamicDataMemberId>(i + 1), \
+        value->data); \
+      if (status != DDS_RETCODE_OK) { \
+        RMW_SET_ERROR_MSG("failed to set value using " #METHOD_NAME); \
+        return false; \
+      } \
+    } \
+  }
+
+#define SET_CPP_STRING_VALUE(TYPE, METHOD_NAME) \
   { \
     if (member->is_array_) { \
       DDS_DynamicData dynamic_data_member(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
@@ -1077,7 +1132,11 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
           uint64_t, DDS_UnsignedLongLong, set_ulonglong, set_ulonglong_array) \
         break; \
       case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
-        SET_STRING_VALUE(std::string, set_string) \
+        if (using_introspection_c_typesupport(typesupport)) { \
+          SET_C_STRING_VALUE(rosidl_generator_c__String, set_string) \
+        } else if (using_introspection_cpp_typesupport(typesupport)) { \
+          SET_CPP_STRING_VALUE(std::string, set_string) \
+        } \
         break; \
       case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
         { \
@@ -1255,6 +1314,7 @@ rmw_create_subscription(
   }
 
   std::string type_name = _create_type_name(
+
     type_support->data, "msg", type_support->typesupport_identifier);
 
   DDS_DomainParticipantQos participant_qos;
@@ -1760,7 +1820,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
     } \
   }
 
-#define GET_STRING_VALUE(TYPE, METHOD_NAME) \
+#define GET_CPP_STRING_VALUE(TYPE, METHOD_NAME) \
   { \
     if (member->is_array_) { \
       ARRAY_SIZE() \
@@ -1828,6 +1888,88 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
       } \
     } \
   }
+
+#define GET_C_STRING_VALUE(TYPE, METHOD_NAME) \
+  { \
+    if (member->is_array_) { \
+      ARRAY_SIZE() \
+      if (array_size > (std::numeric_limits<DDS_DynamicDataMemberId>::max)()) { \
+        RMW_SET_ERROR_MSG( \
+          "failed to get string since the requested string length exceeds the DDS type"); \
+        return false; \
+      } \
+      ARRAY_RESIZE_AND_VALUES(TYPE) \
+      DDS_DynamicData dynamic_data_member(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
+      DDS_ReturnCode_t status = dynamic_data->bind_complex_member( \
+        dynamic_data_member, \
+        NULL, \
+        static_cast<DDS_DynamicDataMemberId>(i + 1)); \
+      if (status != DDS_RETCODE_OK) { \
+        RMW_SET_ERROR_MSG("failed to bind complex member"); \
+        return false; \
+      } \
+      for (size_t j = 0; j < array_size; ++j) { \
+        char * value = 0; \
+        DDS_UnsignedLong size; \
+        /* TODO(wjwwood): Figure out how value is allocated. Why are we freeing it? */ \
+        status = dynamic_data_member.METHOD_NAME( \
+          value, \
+          &size, \
+          NULL, \
+          static_cast<DDS_DynamicDataMemberId>(j + 1)); \
+        if (status != DDS_RETCODE_OK) { \
+          if (value) { \
+            delete[] value; \
+          } \
+          RMW_SET_ERROR_MSG("failed to get array value using " #METHOD_NAME); \
+          return false; \
+        } \
+        bool succeeded = rosidl_generator_c__String__assignn(&ros_values[j], value, size-1); \
+        if (!succeeded) { \
+          RMW_SET_ERROR_MSG("Failed to assign rosidl_generator_c__String"); \
+          return false; \
+        } \
+        if (value) { \
+          delete[] value; \
+        } \
+      } \
+      status = dynamic_data->unbind_complex_member(dynamic_data_member); \
+      if (status != DDS_RETCODE_OK) { \
+        RMW_SET_ERROR_MSG("failed to unbind complex member"); \
+        return false; \
+      } \
+    } else { \
+      char * value = 0; \
+      DDS_UnsignedLong size; \
+      DDS_ReturnCode_t status = dynamic_data->METHOD_NAME( \
+        value, \
+        &size, \
+        NULL, \
+        static_cast<DDS_DynamicDataMemberId>(i + 1)); \
+      if (status != DDS_RETCODE_OK) { \
+        if (value) { \
+          delete[] value; \
+        } \
+        RMW_SET_ERROR_MSG("failed to get primitive value using " #METHOD_NAME); \
+        return false; \
+      } \
+      auto ros_value = \
+        reinterpret_cast<TYPE *>(static_cast<char *>(ros_message) + member->offset_); \
+      if (!ros_value) { \
+        RMW_SET_ERROR_MSG("Failed to assign rosidl_generator_c__String"); \
+        return false; \
+      } \
+      bool succeeded = rosidl_generator_c__String__assignn(ros_value, value, size-1); \
+      if (!succeeded) { \
+        RMW_SET_ERROR_MSG("Failed to assign value to ROS C string"); \
+        return false; \
+      } \
+      if (value) { \
+        delete[] value; \
+      } \
+    } \
+  }
+
 
 #define GET_SUBMESSAGE_VALUE(dynamic_data, i, INTROSPECTION_TYPE) \
   DDS_DynamicData sub_dynamic_data(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
@@ -1910,7 +2052,11 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
           uint64_t, DDS_UnsignedLongLong, get_ulonglong, get_ulonglong_array) \
         break; \
       case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
-        GET_STRING_VALUE(std::string, get_string) \
+        if (using_introspection_c_typesupport(typesupport)) { \
+          GET_C_STRING_VALUE(rosidl_generator_c__String, get_string) \
+        } else if (using_introspection_cpp_typesupport(typesupport)) { \
+          GET_CPP_STRING_VALUE(std::string, get_string) \
+        } \
         break; \
       case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
         { \
@@ -2305,14 +2451,6 @@ rmw_create_client(
     return NULL;
   }
 
-/*
-  RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
-    type support handle,
-    type_support->typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
-    return NULL)
-*/
-
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");
     return nullptr;
@@ -2578,6 +2716,156 @@ rmw_send_request(
   return RMW_RET_OK;
 }
 
+#define CREATE_SERVICE(INTROSPECTION_TYPE) \
+  auto service_members = static_cast<const INTROSPECTION_TYPE(ServiceMembers) *>( \
+    type_support->data); \
+  if (!service_members) { \
+    RMW_SET_ERROR_MSG("service members handle is null"); \
+    return NULL; \
+  } \
+ \
+  const INTROSPECTION_TYPE(MessageMembers) * request_members = \
+    service_members->request_members_; \
+  if (!request_members) { \
+    RMW_SET_ERROR_MSG("request members handle is null"); \
+    return NULL; \
+  } \
+  const INTROSPECTION_TYPE(MessageMembers) * response_members = \
+    service_members->response_members_; \
+  if (!response_members) { \
+    RMW_SET_ERROR_MSG("response members handle is null"); \
+    return NULL; \
+  } \
+ \
+  std::string request_type_name = _create_type_name( \
+    request_members, \
+    "srv", \
+    type_support->typesupport_identifier); \
+  std::string response_type_name = _create_type_name( \
+    response_members, \
+    "srv", \
+    type_support->typesupport_identifier); \
+ \
+  DDS_DomainParticipantQos participant_qos; \
+  DDS_ReturnCode_t status = participant->get_qos(participant_qos); \
+  if (status != DDS_RETCODE_OK) { \
+    RMW_SET_ERROR_MSG("failed to get participant qos"); \
+    return NULL; \
+  } \
+  /* Past this point, a failure results in unrolling code in the goto fail block. */ \
+  /* Begin initializing elements */ \
+  service = rmw_service_allocate(); \
+  if (!service) { \
+    RMW_SET_ERROR_MSG("failed to allocate memory"); \
+    goto fail; \
+  } \
+ \
+  request_type_code = create_type_code( \
+    request_type_name, \
+    request_members, \
+    type_support->typesupport_identifier); \
+  if (!request_type_code) { \
+    /* error string was set within the function */ \
+    goto fail; \
+  } \
+  /* Allocate memory for the DDS::DynamicDataTypeSupport object. */ \
+  buf = rmw_allocate(sizeof(DDS::DynamicDataTypeSupport)); \
+  if (!buf) { \
+    RMW_SET_ERROR_MSG("failed to allocate memory"); \
+    goto fail; \
+  } \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
+     in the preallocated buffer. */ \
+  RMW_TRY_PLACEMENT_NEW( \
+    request_type_support, buf, \
+    goto fail, \
+    DDS::DynamicDataTypeSupport, request_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT) \
+  buf = nullptr;  /* Only free the casted pointer; don't need the buf anymore. */ \
+ \
+  response_type_code = create_type_code( \
+    response_type_name, \
+    response_members, \
+    type_support->typesupport_identifier); \
+  if (!response_type_code) { \
+    /* error string was set within the function */ \
+    goto fail; \
+  } \
+  /* Allocate memory for the DDS::DynamicDataTypeSupport object. */ \
+  buf = rmw_allocate(sizeof(DDS::DynamicDataTypeSupport)); \
+  if (!buf) { \
+    RMW_SET_ERROR_MSG("failed to allocate memory"); \
+    goto fail; \
+  } \
+  /* Use a placement new to construct the DDS::DynamicDataTypeSupport \
+     in the preallocated buffer. */ \
+  RMW_TRY_PLACEMENT_NEW( \
+    response_type_support, buf, \
+    goto fail, \
+    DDS::DynamicDataTypeSupport, response_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT) \
+  buf = nullptr;  /* Only free the casted pointer; don't need the buf anymore. */ \
+ \
+  { \
+    if (!get_datareader_qos(participant, *qos_profile, datareader_qos)) { \
+      /* error string was set within the function */ \
+      goto fail; \
+    } \
+    if (!get_datawriter_qos(participant, *qos_profile, datawriter_qos)) { \
+      /* error string was set within the function */ \
+      goto fail; \
+    } \
+ \
+    /* create requester */ \
+    connext::ReplierParams<DDS_DynamicData, DDS_DynamicData> replier_params(participant); \
+    replier_params.service_name(service_name); \
+    replier_params.request_type_support(request_type_support); \
+    replier_params.reply_type_support(response_type_support); \
+    replier_params.datareader_qos(datareader_qos); \
+    replier_params.datawriter_qos(datawriter_qos); \
+ \
+    /* Allocate memory for the Replier object. */ \
+    using Replier = connext::Replier<DDS_DynamicData, DDS_DynamicData>; \
+    buf = rmw_allocate(sizeof(Replier)); \
+    if (!buf) { \
+      RMW_SET_ERROR_MSG("failed to allocate memory"); \
+      goto fail; \
+    } \
+    /* Use a placement new to construct the Replier in the preallocated buffer. */ \
+    RMW_TRY_PLACEMENT_NEW(replier, buf, goto fail, Replier, replier_params) \
+    buf = nullptr;  /* Only free casted pointer; don't need the buf pointer anymore. */ \
+  } \
+ \
+  request_datareader = replier->get_request_datareader(); \
+  if (!request_datareader) { \
+    RMW_SET_ERROR_MSG("failed to get request datareader"); \
+    goto fail; \
+  } \
+ \
+  read_condition = request_datareader->create_readcondition( \
+    DDS_ANY_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ANY_INSTANCE_STATE); \
+  if (!read_condition) { \
+    RMW_SET_ERROR_MSG("failed to create read condition"); \
+    goto fail; \
+  } \
+ \
+  /* Allocate memory for the ConnextDynamicServiceInfo object. */ \
+  buf = rmw_allocate(sizeof(ConnextDynamicServiceInfo)); \
+  if (!buf) { \
+    RMW_SET_ERROR_MSG("failed to allocate memory"); \
+    goto fail; \
+  } \
+  /* Use a placement new to construct the ConnextDynamicServiceInfo in the preallocated buffer.*/ \
+  RMW_TRY_PLACEMENT_NEW(server_info, buf, goto fail, ConnextDynamicServiceInfo) \
+  buf = nullptr;  /* Only free the casted pointer; don't need the buf pointer anymore. */ \
+  server_info->replier_ = replier; \
+  server_info->request_datareader_ = request_datareader; \
+  server_info->read_condition_ = read_condition; \
+  server_info->response_type_support_ = response_type_support; \
+  server_info->untyped_request_members_ = request_members; \
+  server_info->untyped_response_members_ = response_members; \
+  server_info->typesupport_identifier = type_support->typesupport_identifier; \
+  service->implementation_identifier = rti_connext_dynamic_identifier; \
+  service->data = server_info;
+
 rmw_service_t *
 rmw_create_service(
   const rmw_node_t * node,
@@ -2602,11 +2890,6 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
-    type support handle,
-    type_support->typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
-    return NULL)
 
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");
@@ -2624,163 +2907,29 @@ rmw_create_service(
     return NULL;
   }
 
-  auto service_members = static_cast<const rosidl_typesupport_introspection_cpp::ServiceMembers *>(
-    type_support->data);
-  if (!service_members) {
-    RMW_SET_ERROR_MSG("service members handle is null");
-    return NULL;
-  }
-  const rosidl_typesupport_introspection_cpp::MessageMembers * request_members =
-    service_members->request_members_;
-  if (!request_members) {
-    RMW_SET_ERROR_MSG("request members handle is null");
-    return NULL;
-  }
-  const rosidl_typesupport_introspection_cpp::MessageMembers * response_members =
-    service_members->response_members_;
-  if (!response_members) {
-    RMW_SET_ERROR_MSG("response members handle is null");
-    return NULL;
-  }
-  std::string request_type_name = _create_type_name(
-    request_members,
-    "srv",
-    type_support->typesupport_identifier);
-  std::string response_type_name = _create_type_name(
-    response_members,
-    "srv",
-    type_support->typesupport_identifier);
-
-  DDS_DomainParticipantQos participant_qos;
-  DDS_ReturnCode_t status = participant->get_qos(participant_qos);
-  if (status != DDS_RETCODE_OK) {
-    RMW_SET_ERROR_MSG("failed to get participant qos");
-    return NULL;
-  }
-  // Past this point, a failure results in unrolling code in the goto fail block.
   rmw_service_t * service = nullptr;
-  DDS_TypeCode * request_type_code = nullptr;
-  void * buf = nullptr;
-  DDS::DynamicDataTypeSupport * request_type_support = nullptr;
-  DDS_TypeCode * response_type_code = nullptr;
-  DDS::DynamicDataTypeSupport * response_type_support = nullptr;
-  DDS_DataReaderQos datareader_qos;
-  DDS_DataWriterQos datawriter_qos;
-  connext::Replier<DDS_DynamicData, DDS_DynamicData> * replier = nullptr;
-  DDSDataReader * request_datareader = nullptr;
-  DDSReadCondition * read_condition = nullptr;
-  ConnextDynamicServiceInfo * server_info = nullptr;
-  // Begin initializing elements
-  service = rmw_service_allocate();
-  if (!service) {
-    RMW_SET_ERROR_MSG("failed to allocate memory");
-    goto fail;
+
+  DDS_TypeCode * request_type_code = nullptr; \
+  void * buf = nullptr; \
+  DDS::DynamicDataTypeSupport * request_type_support = nullptr; \
+  DDS_TypeCode * response_type_code = nullptr; \
+  DDS::DynamicDataTypeSupport * response_type_support = nullptr; \
+  DDS_DataReaderQos datareader_qos; \
+  DDS_DataWriterQos datawriter_qos; \
+  connext::Replier<DDS_DynamicData, DDS_DynamicData> * replier = nullptr; \
+  DDSDataReader * request_datareader = nullptr; \
+  DDSReadCondition * read_condition = nullptr; \
+  ConnextDynamicServiceInfo * server_info = nullptr; \
+
+  if (using_introspection_c_typesupport(type_support->typesupport_identifier)) {
+    CREATE_SERVICE(INTROSPECTION_C_TYPE)
+  } else if (using_introspection_c_typesupport(type_support->typesupport_identifier)) {
+    CREATE_SERVICE(INTROSPECTION_CPP_TYPE)
+  } else {
+    RMW_SET_ERROR_MSG("Unknown typesupport identifier");
+    return NULL;
   }
 
-  request_type_code = create_type_code(
-    request_type_name,
-    request_members,
-    type_support->typesupport_identifier);
-  if (!request_type_code) {
-    // error string was set within the function
-    goto fail;
-  }
-  // Allocate memory for the DDS::DynamicDataTypeSupport object.
-  buf = rmw_allocate(sizeof(DDS::DynamicDataTypeSupport));
-  if (!buf) {
-    RMW_SET_ERROR_MSG("failed to allocate memory");
-    goto fail;
-  }
-  // Use a placement new to construct the DDS::DynamicDataTypeSupport in the preallocated buffer.
-  RMW_TRY_PLACEMENT_NEW(
-    request_type_support, buf,
-    goto fail,
-    DDS::DynamicDataTypeSupport, request_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT)
-  buf = nullptr;  // Only free the casted pointer; don't need the buf anymore.
-
-  response_type_code = create_type_code(
-    response_type_name,
-    response_members,
-    type_support->typesupport_identifier);
-  if (!response_type_code) {
-    // error string was set within the function
-    goto fail;
-  }
-  // Allocate memory for the DDS::DynamicDataTypeSupport object.
-  buf = rmw_allocate(sizeof(DDS::DynamicDataTypeSupport));
-  if (!buf) {
-    RMW_SET_ERROR_MSG("failed to allocate memory");
-    goto fail;
-  }
-  // Use a placement new to construct the DDS::DynamicDataTypeSupport in the preallocated buffer.
-  RMW_TRY_PLACEMENT_NEW(
-    response_type_support, buf,
-    goto fail,
-    DDS::DynamicDataTypeSupport, response_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT)
-  buf = nullptr;  // Only free the casted pointer; don't need the buf anymore.
-
-  {
-    if (!get_datareader_qos(participant, *qos_profile, datareader_qos)) {
-      // error string was set within the function
-      goto fail;
-    }
-    if (!get_datawriter_qos(participant, *qos_profile, datawriter_qos)) {
-      // error string was set within the function
-      goto fail;
-    }
-
-    // create requester
-    connext::ReplierParams<DDS_DynamicData, DDS_DynamicData> replier_params(participant);
-    replier_params.service_name(service_name);
-    replier_params.request_type_support(request_type_support);
-    replier_params.reply_type_support(response_type_support);
-    replier_params.datareader_qos(datareader_qos);
-    replier_params.datawriter_qos(datawriter_qos);
-
-    // Allocate memory for the Replier object.
-    using Replier = connext::Replier<DDS_DynamicData, DDS_DynamicData>;
-    buf = rmw_allocate(sizeof(Replier));
-    if (!buf) {
-      RMW_SET_ERROR_MSG("failed to allocate memory");
-      goto fail;
-    }
-    // Use a placement new to construct the Replier in the preallocated buffer.
-    RMW_TRY_PLACEMENT_NEW(replier, buf, goto fail, Replier, replier_params)
-    buf = nullptr;  // Only free casted pointer; don't need the buf pointer anymore.
-  }
-
-  request_datareader = replier->get_request_datareader();
-  if (!request_datareader) {
-    RMW_SET_ERROR_MSG("failed to get request datareader");
-    goto fail;
-  }
-
-  read_condition = request_datareader->create_readcondition(
-    DDS_ANY_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ANY_INSTANCE_STATE);
-  if (!read_condition) {
-    RMW_SET_ERROR_MSG("failed to create read condition");
-    goto fail;
-  }
-
-  // Allocate memory for the ConnextDynamicServiceInfo object.
-  buf = rmw_allocate(sizeof(ConnextDynamicServiceInfo));
-  if (!buf) {
-    RMW_SET_ERROR_MSG("failed to allocate memory");
-    goto fail;
-  }
-  // Use a placement new to construct the ConnextDynamicServiceInfo in the preallocated buffer.
-  RMW_TRY_PLACEMENT_NEW(server_info, buf, goto fail, ConnextDynamicServiceInfo)
-  buf = nullptr;  // Only free the casted pointer; don't need the buf pointer anymore.
-  server_info->replier_ = replier;
-  server_info->request_datareader_ = request_datareader;
-  server_info->read_condition_ = read_condition;
-  server_info->response_type_support_ = response_type_support;
-  server_info->untyped_request_members_ = request_members;
-  server_info->untyped_response_members_ = response_members;
-  server_info->typesupport_identifier = type_support->typesupport_identifier;
-
-  service->implementation_identifier = rti_connext_dynamic_identifier;
-  service->data = server_info;
   return service;
 fail:
   if (request_datareader) {
