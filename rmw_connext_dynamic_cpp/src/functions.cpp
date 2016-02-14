@@ -2354,6 +2354,10 @@ rmw_wait(
     response_type_name, \
     response_members, \
     type_support->typesupport_identifier); \
+  if (!request_type_support->is_valid()) { \
+    RMW_SET_ERROR_MSG("failed to construct dynamic data type support for request"); \
+    goto fail; \
+  } \
   if (!request_type_code) { \
     /* error string was set within the function */ \
     goto fail; \
@@ -2402,6 +2406,10 @@ rmw_wait(
       goto fail, \
       Requester, requester_params) \
     buf = nullptr;  /* Only free the casted pointer; don't need the buf pointer anymore. */ \
+  } \
+  if (!response_type_support->is_valid()) { \
+    RMW_SET_ERROR_MSG("failed to construct dynamic data type support for response"); \
+    goto fail; \
   } \
  \
   response_datareader = requester->get_reply_datareader(); \
