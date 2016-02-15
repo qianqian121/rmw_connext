@@ -2927,7 +2927,7 @@ rmw_create_service(
 
   if (using_introspection_c_typesupport(type_support->typesupport_identifier)) {
     CREATE_SERVICE(INTROSPECTION_C_TYPE)
-  } else if (using_introspection_c_typesupport(type_support->typesupport_identifier)) {
+  } else if (using_introspection_cpp_typesupport(type_support->typesupport_identifier)) {
     CREATE_SERVICE(INTROSPECTION_CPP_TYPE)
   } else {
     RMW_SET_ERROR_MSG("Unknown typesupport identifier");
