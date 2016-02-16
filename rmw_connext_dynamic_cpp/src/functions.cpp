@@ -68,6 +68,52 @@
 #include "rmw_connext_shared_cpp/shared_functions.hpp"
 #include "rmw_connext_shared_cpp/types.hpp"
 
+// Two different kinds of concatenation are needed for these namespaces
+#define INTROSPECTION_CPP_TYPE(A) rosidl_typesupport_introspection_cpp::A
+
+#define INTROSPECTION_C_TYPE(A) rosidl_typesupport_introspection_c__ ## A
+
+#define CREATE_TYPENAME_PREFIX(INTROSPECTION_TYPE) \
+  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members); \
+  if (!members) { \
+    return ""; \
+  } \
+  package_name = members->package_name_; \
+  message_name = members->message_name_;
+
+
+bool using_introspection_c_typesupport(const char * typesupport_identifier)
+{
+  return strcmp(typesupport_identifier, rosidl_typesupport_introspection_c__identifier) == 0;
+}
+
+bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
+{
+  return strcmp(
+    typesupport_identifier,
+    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier) == 0;
+}
+
+ROSIDL_TYPESUPPORT_INTROSPECTION_CPP_LOCAL
+inline std::string
+_create_type_name(
+  const void * untyped_members,
+  const std::string & sep,
+  const char * typesupport)
+{
+  std::string package_name, message_name;
+  if (using_introspection_c_typesupport(typesupport)) {
+    CREATE_TYPENAME_PREFIX(INTROSPECTION_C_TYPE)
+  } else if (using_introspection_cpp_typesupport(typesupport)) {
+    CREATE_TYPENAME_PREFIX(INTROSPECTION_CPP_TYPE)
+  } else {
+    RMW_SET_ERROR_MSG("Unknown type support identfier")
+    return "";
+  }
+  return
+    std::string(package_name) + "::" + sep + "::dds_::" + message_name + "_";
+}
+
 // This extern "C" prevents accidental overloading of functions. With this in
 // place, overloading produces an error rather than a new C++ symbol.
 extern "C"
@@ -130,52 +176,6 @@ struct ConnextDynamicClientInfo
   const void * untyped_response_members_;
 };
 
-
-bool using_introspection_c_typesupport(const char * typesupport_identifier)
-{
-  return strcmp(typesupport_identifier, rosidl_typesupport_introspection_c__identifier) == 0;
-}
-
-bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
-{
-  return strcmp(
-    typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier) == 0;
-}
-
-// Two different kinds of concatenation are needed for these namespaces
-#define INTROSPECTION_CPP_TYPE(A) rosidl_typesupport_introspection_cpp::A
-
-#define INTROSPECTION_C_TYPE(A) rosidl_typesupport_introspection_c__ ## A
-
-#define CREATE_TYPENAME_PREFIX(INTROSPECTION_TYPE) \
-  auto members = static_cast<const INTROSPECTION_TYPE(MessageMembers) *>(untyped_members); \
-  if (!members) { \
-    return ""; \
-  } \
-  package_name = members->package_name_; \
-  message_name = members->message_name_;
-
-
-ROSIDL_TYPESUPPORT_INTROSPECTION_CPP_LOCAL
-inline std::string
-_create_type_name(
-  const void * untyped_members,
-  const std::string & sep,
-  const char * typesupport)
-{
-  std::string package_name, message_name;
-  if (using_introspection_c_typesupport(typesupport)) {
-    CREATE_TYPENAME_PREFIX(INTROSPECTION_C_TYPE)
-  } else if (using_introspection_cpp_typesupport(typesupport)) {
-    CREATE_TYPENAME_PREFIX(INTROSPECTION_CPP_TYPE)
-  } else {
-    RMW_SET_ERROR_MSG("Unknown type support identfier")
-    return "";
-  }
-  return
-    std::string(package_name) + "::" + sep + "::dds_::" + message_name + "_";
-}
 
 const char *
 rmw_get_implementation_identifier()
