@@ -56,15 +56,42 @@
 #include "rosidl_typesupport_introspection_cpp/service_introspection.hpp"
 #include "rosidl_typesupport_introspection_cpp/visibility_control.h"
 
+#include "rosidl_typesupport_introspection_c/field_types.h"
+#include "rosidl_typesupport_introspection_c/identifier.h"
+#include "rosidl_typesupport_introspection_c/message_introspection.h"
+#include "rosidl_typesupport_introspection_c/service_introspection.h"
+#include "rosidl_typesupport_introspection_c/visibility_control.h"
+
 #include "rmw_connext_shared_cpp/shared_functions.hpp"
 #include "rmw_connext_shared_cpp/types.hpp"
 
+#include "macros.hpp"
+
+
+bool using_introspection_c_typesupport(const char * typesupport_identifier)
+{
+  return strcmp(typesupport_identifier, rosidl_typesupport_introspection_c__identifier) == 0;
+}
+
+bool using_introspection_cpp_typesupport(const char * typesupport_identifier)
+{
+  return strcmp(
+    typesupport_identifier,
+    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier) == 0;
+}
+
+template<typename MembersType>
 ROSIDL_TYPESUPPORT_INTROSPECTION_CPP_LOCAL
 inline std::string
 _create_type_name(
-  const rosidl_typesupport_introspection_cpp::MessageMembers * members,
+  const void * untyped_members,
   const std::string & sep)
 {
+  auto members = static_cast<const MembersType *>(untyped_members);
+  if (!members) {
+    RMW_SET_ERROR_MSG("members handle is null");
+    return NULL;
+  }
   return
     std::string(members->package_name_) + "::" + sep + "::dds_::" + members->message_name_ + "_";
 }
@@ -83,7 +110,7 @@ struct CustomPublisherInfo
   DDSDataWriter * data_writer_;
   DDSDynamicDataWriter * dynamic_writer_;
   DDS_TypeCode * type_code_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * members_;
+  const void * untyped_members_;
   DDS_DynamicData * dynamic_data;
   rmw_gid_t publisher_gid;
 };
@@ -97,7 +124,7 @@ struct CustomSubscriberInfo
   DDSSubscriber * dds_subscriber_;
   bool ignore_local_publications;
   DDS_TypeCode * type_code_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * members_;
+  const void * untyped_members_;
   DDS_DynamicData * dynamic_data;
 };
 
@@ -110,8 +137,8 @@ struct ConnextDynamicServiceInfo
   DDS::DynamicDataTypeSupport * response_type_support_;
   DDS_TypeCode * response_type_code_;
   DDS_TypeCode * request_type_code_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * request_members_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * response_members_;
+  const void * untyped_request_members_;
+  const void * untyped_response_members_;
 };
 
 struct ConnextDynamicClientInfo
@@ -123,8 +150,8 @@ struct ConnextDynamicClientInfo
   DDS::DynamicDataTypeSupport * response_type_support_;
   DDS_TypeCode * response_type_code_;
   DDS_TypeCode * request_type_code_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * request_members_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * response_members_;
+  const void * untyped_request_members_;
+  const void * untyped_response_members_;
 };
 
 
@@ -171,9 +198,18 @@ destroy_type_code(DDS_TypeCode * type_code)
   return RMW_RET_OK;
 }
 
+} // extern C
+
+template<typename MembersType>
 DDS_TypeCode * create_type_code(
-  std::string type_name, const rosidl_typesupport_introspection_cpp::MessageMembers * members)
+  std::string type_name, const MembersType * untyped_members, const char * introspection_identifier)
 {
+  auto members = static_cast<const MembersType *>(untyped_members);
+  if (!members) {
+    RMW_SET_ERROR_MSG("members handle is null");
+    return NULL;
+  }
+
   DDS_TypeCodeFactory * factory = DDS_TypeCodeFactory::get_instance();
   if (!factory) {
     RMW_SET_ERROR_MSG("failed to get typecode factory");
@@ -189,96 +225,19 @@ DDS_TypeCode * create_type_code(
     goto fail;
   }
   for (uint32_t i = 0; i < members->member_count_; ++i) {
-    const rosidl_typesupport_introspection_cpp::MessageMember * member = members->members_ + i;
+    //const rosidl_typesupport_introspection_cpp::MessageMember * member = members->members_ + i;
+    auto * member = members->members_ + i;
     const DDS_TypeCode * member_type_code = nullptr;
     DDS_TypeCode * member_type_code_non_const = nullptr;
-    switch (member->type_id_) {
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL:
-        member_type_code = factory->get_primitive_tc(DDS_TK_BOOLEAN);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE:
-        member_type_code = factory->get_primitive_tc(DDS_TK_OCTET);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
-        member_type_code = factory->get_primitive_tc(DDS_TK_CHAR);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT32:
-        member_type_code = factory->get_primitive_tc(DDS_TK_FLOAT);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT64:
-        member_type_code = factory->get_primitive_tc(DDS_TK_DOUBLE);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8:
-        member_type_code = factory->get_primitive_tc(DDS_TK_OCTET);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8:
-        member_type_code = factory->get_primitive_tc(DDS_TK_OCTET);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT16:
-        member_type_code = factory->get_primitive_tc(DDS_TK_SHORT);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT16:
-        member_type_code = factory->get_primitive_tc(DDS_TK_USHORT);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT32:
-        member_type_code = factory->get_primitive_tc(DDS_TK_LONG);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT32:
-        member_type_code = factory->get_primitive_tc(DDS_TK_ULONG);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT64:
-        member_type_code = factory->get_primitive_tc(DDS_TK_LONGLONG);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT64:
-        member_type_code = factory->get_primitive_tc(DDS_TK_ULONGLONG);
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING:
-        {
-          DDS_UnsignedLong max_string_size;
-          if (member->string_upper_bound_) {
-            if (member->string_upper_bound_ > (std::numeric_limits<DDS_UnsignedLong>::max)()) {
-              RMW_SET_ERROR_MSG(
-                "failed to create string typecode since the upper bound exceeds the DDS type");
-              goto fail;
-            }
-            max_string_size = static_cast<DDS_UnsignedLong>(member->string_upper_bound_);
-          } else {
-            max_string_size = RTI_INT32_MAX;
-          }
-          member_type_code_non_const = factory->create_string_tc(max_string_size, ex);
-          member_type_code = member_type_code_non_const;
-        }
-        if (!member_type_code || ex != DDS_NO_EXCEPTION_CODE) {
-          RMW_SET_ERROR_MSG("failed to create string typecode");
-          goto fail;
-        }
-        break;
-      case rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE:
-        {
-          if (!member->members_) {
-            RMW_SET_ERROR_MSG("members handle is null");
-            return NULL;
-          }
-          auto sub_members =
-            static_cast<const ::rosidl_typesupport_introspection_cpp::MessageMembers *>(
-            member->members_->data);
-          if (!sub_members) {
-            RMW_SET_ERROR_MSG("sub members handle is null");
-            return NULL;
-          }
-          std::string field_type_name = _create_type_name(sub_members, "msg");
-          member_type_code = create_type_code(field_type_name, sub_members);
-          if (!member_type_code) {
-            // error string was set within the function
-            goto fail;
-          }
-        }
-        break;
-      default:
-        RMW_SET_ERROR_MSG(
-          (std::string("unknown type id ") + std::to_string(member->type_id_)).c_str());
-        goto fail;
+    if (using_introspection_c_typesupport(introspection_identifier)) {
+      ASSIGN_INTROSPECTION_FIELDS(INTROSPECTION_C_TYPE)
+    } else if (using_introspection_cpp_typesupport(introspection_identifier)) {
+      ASSIGN_INTROSPECTION_FIELDS(INTROSPECTION_CPP_TYPE)
+    } else {
+      RMW_SET_ERROR_MSG("Unknown typesupport identifier")
+      goto fail;
     }
+
     if (!member_type_code) {
       RMW_SET_ERROR_MSG("failed to create typecode");
       goto fail;
@@ -370,6 +329,9 @@ fail:
   return nullptr;
 }
 
+extern "C"
+{
+
 rmw_publisher_t *
 rmw_create_publisher(
   const rmw_node_t * node,
@@ -389,11 +351,12 @@ rmw_create_publisher(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
+  /*RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
     type support handle,
     type_support->typesupport_identifier,
     rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
     return NULL)
+  */
 
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");
@@ -411,13 +374,17 @@ rmw_create_publisher(
     return NULL;
   }
 
-  auto members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-    type_support->data);
-  if (!members) {
-    RMW_SET_ERROR_MSG("members handle is null");
-    return NULL;
+  std::string type_name;
+  if (using_introspection_c_typesupport(type_support->typesupport_identifier)) {
+    type_name = _create_type_name<rosidl_typesupport_introspection_c__MessageMembers>(
+      type_support->data, "msg");
+  } else if (using_introspection_cpp_typesupport(type_support->typesupport_identifier)) {
+    type_name = _create_type_name<rosidl_typesupport_introspection_cpp::MessageMembers>(
+      type_support->data, "msg");
+  } else {
+    RMW_SET_ERROR_MSG("Unknown typesupport identifier")
+    goto fail;
   }
-  std::string type_name = _create_type_name(members, "msg");
 
   DDS_DomainParticipantQos participant_qos;
   DDS_ReturnCode_t status = participant->get_qos(participant_qos);
@@ -446,7 +413,7 @@ rmw_create_publisher(
     goto fail;
   }
 
-  type_code = create_type_code(type_name, members);
+  type_code = create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
   if (!type_code) {
     // error string was set within the function
     goto fail;
@@ -550,7 +517,7 @@ rmw_create_publisher(
   custom_publisher_info->data_writer_ = topic_writer;
   custom_publisher_info->dynamic_writer_ = dynamic_writer;
   custom_publisher_info->type_code_ = type_code;
-  custom_publisher_info->members_ = members;
+  custom_publisher_info->untyped_members_ = type_support->data;
   custom_publisher_info->dynamic_data = dynamic_data;
   custom_publisher_info->publisher_gid.implementation_identifier = rti_connext_dynamic_identifier;
   static_assert(
