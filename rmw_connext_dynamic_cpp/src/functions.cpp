@@ -67,6 +67,7 @@
 
 #include "rmw_connext_shared_cpp/shared_functions.hpp"
 #include "rmw_connext_shared_cpp/types.hpp"
+#include "macros.hpp"
 
 bool using_introspection_c_typesupport(const char * typesupport_identifier)
 {
