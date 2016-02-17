@@ -426,12 +426,6 @@ rmw_create_publisher(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  /*RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
-    type support handle,
-    type_support->typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
-    return NULL)
-  */
 
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");
@@ -469,7 +463,6 @@ rmw_create_publisher(
   DDSDynamicDataWriter * dynamic_writer = nullptr;
   DDS_DynamicData * dynamic_data = nullptr;
   CustomPublisherInfo * custom_publisher_info = nullptr;
-
 
   std::string type_name = _create_type_name(type_support->data, "msg", type_support->typesupport_identifier);
   type_code = _create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
@@ -588,6 +581,7 @@ rmw_create_publisher(
   custom_publisher_info->untyped_members_ = type_support->data;
   custom_publisher_info->dynamic_data = dynamic_data;
   custom_publisher_info->publisher_gid.implementation_identifier = rti_connext_dynamic_identifier;
+  custom_publisher_info->typesupport_identifier = type_support->typesupport_identifier;
   static_assert(
     sizeof(ConnextPublisherGID) <= RMW_GID_STORAGE_SIZE,
     "RMW_GID_STORAGE_SIZE insufficient to store the rmw_connext_dynamic_cpp GID implemenation."
@@ -1309,6 +1303,7 @@ rmw_create_subscription(
   custom_subscriber_info->type_code_ = type_code;
   custom_subscriber_info->untyped_members_ = type_support->data;
   custom_subscriber_info->dynamic_data = dynamic_data;
+  custom_subscriber_info->typesupport_identifier = type_support->typesupport_identifier;
 
   subscription->implementation_identifier = rti_connext_dynamic_identifier;
   subscription->data = custom_subscriber_info;
@@ -2177,6 +2172,7 @@ rmw_create_client(
   client_info->request_type_code_ = request_type_code;
   client_info->untyped_request_members_ = untyped_request_members;
   client_info->untyped_response_members_ = untyped_response_members;
+  client_info->typesupport_identifier = type_support->typesupport_identifier;
 
   client->implementation_identifier = rti_connext_dynamic_identifier;
   client->data = client_info;
@@ -2541,6 +2537,7 @@ rmw_create_service(
   server_info->response_type_support_ = response_type_support;
   server_info->untyped_request_members_ = untyped_request_members;
   server_info->untyped_response_members_ = untyped_response_members;
+  server_info->typesupport_identifier = type_support->typesupport_identifier;
 
   service->implementation_identifier = rti_connext_dynamic_identifier;
   service->data = server_info;
