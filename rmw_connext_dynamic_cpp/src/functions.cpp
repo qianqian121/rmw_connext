@@ -48,6 +48,9 @@
 // is in the include/rosidl_typesupport_connext_cpp/impl folder.
 #include "rosidl_generator_cpp/message_type_support.hpp"
 
+#include "rosidl_generator_c/string.h"
+#include "rosidl_generator_c/string_functions.h"
+
 #include "rmw/impl/cpp/macros.hpp"
 
 #include "rosidl_typesupport_introspection_cpp/field_types.hpp"
@@ -908,7 +911,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
     } \
   }
 
-#define SET_STRING_VALUE(TYPE, METHOD_NAME) \
+#define SET_STRING_VALUE(TYPE, METHOD_NAME, ACCESSOR) \
   { \
     if (member->is_array_) { \
       DDS_DynamicData dynamic_data_member(NULL, DDS_DYNAMIC_DATA_PROPERTY_DEFAULT); \
@@ -930,7 +933,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
         status = dynamic_data_member.METHOD_NAME( \
           NULL, \
           static_cast<DDS_DynamicDataMemberId>(j + 1), \
-          ros_values[j].c_str()); \
+          ros_values[j]. ACCESSOR); \
         if (status != DDS_RETCODE_OK) { \
           RMW_SET_ERROR_MSG("failed to set array value using " #METHOD_NAME); \
           return false; \
@@ -947,7 +950,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
       DDS_ReturnCode_t status = dynamic_data->METHOD_NAME( \
         NULL, \
         static_cast<DDS_DynamicDataMemberId>(i + 1), \
-        value->c_str()); \
+        value-> ACCESSOR); \
       if (status != DDS_RETCODE_OK) { \
         RMW_SET_ERROR_MSG("failed to set value using " #METHOD_NAME); \
         return false; \
@@ -1661,7 +1664,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
     } \
   }
 
-#define GET_STRING_VALUE(TYPE, METHOD_NAME) \
+#define GET_STRING_VALUE(TYPE, METHOD_NAME, ASSIGN_METHOD) \
   { \
     if (member->is_array_) { \
       ARRAY_SIZE() \
@@ -1696,7 +1699,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
           RMW_SET_ERROR_MSG("failed to get array value using " #METHOD_NAME); \
           return false; \
         } \
-        ros_values[j] = value; \
+        ASSIGN_METHOD(ros_values[j], value); \
         if (value) { \
           delete[] value; \
         } \
@@ -1723,7 +1726,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
       } \
       auto ros_value = \
         reinterpret_cast<TYPE *>(static_cast<char *>(ros_message) + member->offset_); \
-      *ros_value = value; \
+      ASSIGN_METHOD(*ros_value, value); \
       if (value) { \
         delete[] value; \
       } \

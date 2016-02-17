@@ -3,6 +3,10 @@
 
 #define INTROSPECTION_C_TYPE(A) rosidl_typesupport_introspection_c__ ## A
 
+#define C_STRING_ASSIGN(A, B) rosidl_generator_c__String__assignn(&A, B, size - 1);
+
+#define CPP_STRING_ASSIGN(A, B) A = B;
+
 #define ASSIGN_TYPE_CODE_INTROSPECTION_FIELDS(INTROSPECTION_TYPE) \
     switch (member->type_id_) { \
       case INTROSPECTION_TYPE(ROS_TYPE_BOOL): \
@@ -134,7 +138,12 @@
         uint64_t, DDS_UnsignedLongLong, set_ulonglong, set_ulonglong_array) \
       break; \
     case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
-      SET_STRING_VALUE(std::string, set_string) \
+      /* TODO */ \
+      if (using_introspection_c_typesupport(typesupport)) { \
+        SET_STRING_VALUE(rosidl_generator_c__String, set_string, data) \
+      } else if (using_introspection_cpp_typesupport(typesupport)) { \
+        SET_STRING_VALUE(std::string, set_string, c_str()) \
+      } \
       break; \
     case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
       { \
@@ -229,7 +238,11 @@
         uint64_t, DDS_UnsignedLongLong, get_ulonglong, get_ulonglong_array) \
       break; \
     case INTROSPECTION_TYPE(ROS_TYPE_STRING): \
-      GET_STRING_VALUE(std::string, get_string) \
+      if (using_introspection_c_typesupport(typesupport)) { \
+        GET_STRING_VALUE(rosidl_generator_c__String, set_string, C_STRING_ASSIGN) \
+      } else if (using_introspection_cpp_typesupport(typesupport)) { \
+        GET_STRING_VALUE(std::string, set_string, CPP_STRING_ASSIGN) \
+      } \
       break; \
     case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
       { \
