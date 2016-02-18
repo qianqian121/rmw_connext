@@ -107,17 +107,19 @@ _create_type_name(
   const char * typesupport)
 {
   if (using_introspection_c_typesupport(typesupport)) {
-    return _create_type_name<rosidl_typesupport_introspection_c__MessageMembers>(untyped_members, sep);
-;
+    return _create_type_name<rosidl_typesupport_introspection_c__MessageMembers>(untyped_members,
+             sep);
   } else if (using_introspection_cpp_typesupport(typesupport)) {
-    return _create_type_name<rosidl_typesupport_introspection_cpp::MessageMembers>(untyped_members, sep);
+    return _create_type_name<rosidl_typesupport_introspection_cpp::MessageMembers>(untyped_members,
+             sep);
   }
   RMW_SET_ERROR_MSG("service members handle is null");
   return NULL;
 }
 
 template<typename ServiceType>
-const void * get_request_ptr(const void * untyped_service_members) {
+const void * get_request_ptr(const void * untyped_service_members)
+{
   auto service_members = static_cast<const ServiceType *>(untyped_service_members);
   if (!service_members) {
     RMW_SET_ERROR_MSG("service members handle is null");
@@ -126,18 +128,22 @@ const void * get_request_ptr(const void * untyped_service_members) {
   return service_members->request_members_;
 }
 
-const void * get_request_ptr(const void * untyped_service_members, const char * typesupport) {
+const void * get_request_ptr(const void * untyped_service_members, const char * typesupport)
+{
   if (using_introspection_c_typesupport(typesupport)) {
-    return get_request_ptr<rosidl_typesupport_introspection_c__ServiceMembers>(untyped_service_members);
+    return get_request_ptr<rosidl_typesupport_introspection_c__ServiceMembers>(
+      untyped_service_members);
   } else if (using_introspection_cpp_typesupport(typesupport)) {
-    return get_request_ptr<rosidl_typesupport_introspection_cpp::ServiceMembers>(untyped_service_members);
+    return get_request_ptr<rosidl_typesupport_introspection_cpp::ServiceMembers>(
+      untyped_service_members);
   }
   RMW_SET_ERROR_MSG("service members handle is null");
   return NULL;
 }
 
 template<typename ServiceType>
-const void * get_response_ptr(const void * untyped_service_members) {
+const void * get_response_ptr(const void * untyped_service_members)
+{
   auto service_members = static_cast<const ServiceType *>(untyped_service_members);
   if (!service_members) {
     RMW_SET_ERROR_MSG("service members handle is null");
@@ -146,11 +152,14 @@ const void * get_response_ptr(const void * untyped_service_members) {
   return service_members->response_members_;
 }
 
-const void * get_response_ptr(const void * untyped_service_members, const char * typesupport) {
+const void * get_response_ptr(const void * untyped_service_members, const char * typesupport)
+{
   if (using_introspection_c_typesupport(typesupport)) {
-    return get_response_ptr<rosidl_typesupport_introspection_c__ServiceMembers>(untyped_service_members);
+    return get_response_ptr<rosidl_typesupport_introspection_c__ServiceMembers>(
+      untyped_service_members);
   } else if (using_introspection_cpp_typesupport(typesupport)) {
-    return get_response_ptr<rosidl_typesupport_introspection_cpp::ServiceMembers>(untyped_service_members);
+    return get_response_ptr<rosidl_typesupport_introspection_cpp::ServiceMembers>(
+      untyped_service_members);
   }
   RMW_SET_ERROR_MSG("service members handle is null");
   return NULL;
@@ -261,8 +270,7 @@ destroy_type_code(DDS_TypeCode * type_code)
   }
   return RMW_RET_OK;
 }
-
-} // extern C
+}  // extern C
 
 template<typename MembersType>
 DDS_TypeCode * create_type_code(
@@ -409,7 +417,6 @@ DDS_TypeCode * _create_type_code(
 
 extern "C"
 {
-
 rmw_publisher_t *
 rmw_create_publisher(
   const rmw_node_t * node,
@@ -467,8 +474,8 @@ rmw_create_publisher(
   DDS_DynamicData * dynamic_data = nullptr;
   CustomPublisherInfo * custom_publisher_info = nullptr;
 
-  std::string type_name = _create_type_name(type_support->data, "msg", type_support->typesupport_identifier);
-  type_code = _create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
+  std::string type_name = _create_type_name(type_support->data, "msg",
+      type_support->typesupport_identifier);
 
   // Start initializing elements.
 
@@ -478,6 +485,8 @@ rmw_create_publisher(
     goto fail;
   }
 
+  type_code =
+    _create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
   if (!type_code) {
     // error string was set within the function
     goto fail;
@@ -734,7 +743,8 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
         custom_publisher_info->dynamic_data = nullptr;
       }
       std::string type_name = _create_type_name(
-          custom_publisher_info->untyped_members_, "msg", custom_publisher_info->typesupport_identifier);
+        custom_publisher_info->untyped_members_, "msg",
+        custom_publisher_info->typesupport_identifier);
       // TODO(wjwwood) Cannot unregister and free type here, in case another topic is using the
       // same type.
       // Should be cleaned up when the node is destroyed.
@@ -933,7 +943,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
         status = dynamic_data_member.METHOD_NAME( \
           NULL, \
           static_cast<DDS_DynamicDataMemberId>(j + 1), \
-          ros_values[j]. ACCESSOR); \
+          ros_values[j].ACCESSOR); \
         if (status != DDS_RETCODE_OK) { \
           RMW_SET_ERROR_MSG("failed to set array value using " #METHOD_NAME); \
           return false; \
@@ -950,7 +960,7 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
       DDS_ReturnCode_t status = dynamic_data->METHOD_NAME( \
         NULL, \
         static_cast<DDS_DynamicDataMemberId>(i + 1), \
-        value-> ACCESSOR); \
+        value->ACCESSOR); \
       if (status != DDS_RETCODE_OK) { \
         RMW_SET_ERROR_MSG("failed to set value using " #METHOD_NAME); \
         return false; \
@@ -995,7 +1005,6 @@ rmw_destroy_publisher(rmw_node_t * node, rmw_publisher_t * publisher)
     RMW_SET_ERROR_MSG("failed to unbind complex member"); \
     return false; \
   }
-
 }  // extern C
 
 
@@ -1020,7 +1029,6 @@ bool publish(
       RMW_SET_ERROR_MSG("Unknown typesupport identifier")
       return false;
     }
-
   }
   return true;
 }
@@ -1158,6 +1166,8 @@ rmw_create_subscription(
     RMW_SET_ERROR_MSG("members handle is null");
     return NULL;
   }
+  std::string type_name = _create_type_name(
+    type_support->data, "msg", type_support->typesupport_identifier);
 
   DDS_DomainParticipantQos participant_qos;
   DDS_ReturnCode_t status = participant->get_qos(participant_qos);
@@ -1181,9 +1191,6 @@ rmw_create_subscription(
   DDS_DynamicData * dynamic_data = nullptr;
   CustomSubscriberInfo * custom_subscriber_info = nullptr;
 
-  std::string type_name = _create_type_name(
-      type_support->data, "msg", type_support->typesupport_identifier);
-  type_code = _create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
 
   // Begin initialization of elements.
   subscription = rmw_subscription_allocate();
@@ -1192,6 +1199,8 @@ rmw_create_subscription(
     goto fail;
   }
 
+  type_code =
+    _create_type_code(type_name, type_support->data, type_support->typesupport_identifier);
   if (!type_code) {
     // error string was set within the function
     goto fail;
@@ -1452,7 +1461,8 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
         custom_subscription_info->dynamic_data = nullptr;
       }
       std::string type_name = _create_type_name(
-          custom_subscription_info->untyped_members_, "msg", custom_subscription_info->typesupport_identifier);
+        custom_subscription_info->untyped_members_, "msg",
+        custom_subscription_info->typesupport_identifier);
       // TODO(wjwwood) Cannot unregister and free type here, in case another topic is using the
       // same type.
       // Should be cleaned up when the node is destroyed.
@@ -1758,7 +1768,6 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
     RMW_SET_ERROR_MSG("failed to unbind complex member"); \
     return false; \
   }
-
 }  // extern_c
 
 template<typename MembersType>
@@ -1781,7 +1790,6 @@ bool take(DDS_DynamicData * dynamic_data, void * ros_message,
       RMW_SET_ERROR_MSG("Unknown typesupport identifier")
       return false;
     }
-
   }
   return true;
 }
@@ -1802,7 +1810,6 @@ bool _take(DDS_DynamicData * dynamic_data, void * ros_message,
 
 extern "C"
 {
-
 rmw_ret_t
 _take_impl(const rmw_subscription_t * subscription, void * ros_message, bool * taken,
   DDS_InstanceHandle_t * sending_publication_handle)
@@ -1891,7 +1898,8 @@ _take_impl(const rmw_subscription_t * subscription, void * ros_message, bool * t
 
   bool success = true;
   if (!ignore_sample) {
-
+    success = _take(&dynamic_data_sequence[0], ros_message, subscriber_info->untyped_members_,
+        subscriber_info->typesupport_identifier);
     if (success) {
       *taken = true;
     }
@@ -2052,18 +2060,24 @@ rmw_create_client(
     RMW_SET_ERROR_MSG("failed to get participant qos");
     return NULL;
   }
-  untyped_request_members = get_request_ptr(type_support->data, type_support->typesupport_identifier);
-  untyped_response_members = get_response_ptr(type_support->data, type_support->typesupport_identifier);
-  request_type_name = _create_type_name(untyped_request_members, "srv", type_support->typesupport_identifier);
-  response_type_name = _create_type_name(untyped_response_members, "srv", type_support->typesupport_identifier);
+  untyped_request_members =
+    get_request_ptr(type_support->data, type_support->typesupport_identifier);
+  untyped_response_members = get_response_ptr(type_support->data,
+      type_support->typesupport_identifier);
+  request_type_name = _create_type_name(untyped_request_members, "srv",
+      type_support->typesupport_identifier);
+  response_type_name = _create_type_name(untyped_response_members, "srv",
+      type_support->typesupport_identifier);
 
-  request_type_code = _create_type_code(request_type_name, untyped_request_members, type_support->typesupport_identifier);
+  request_type_code = _create_type_code(request_type_name, untyped_request_members,
+      type_support->typesupport_identifier);
   if (!request_type_code) {
     // error string was set within the function
     goto fail;
   }
 
-  response_type_code = _create_type_code(response_type_name, untyped_response_members, type_support->typesupport_identifier);
+  response_type_code = _create_type_code(response_type_name, untyped_response_members,
+      type_support->typesupport_identifier);
   if (!response_type_code) {
     // error string was set within the function
     goto fail;
@@ -2350,7 +2364,7 @@ rmw_send_request(
   connext::WriteSampleRef<DDS::DynamicData> request(*sample, writeParams);
 
   bool published = _publish(sample, ros_request, client_info->untyped_request_members_,
-                            client_info->typesupport_identifier);
+      client_info->typesupport_identifier);
   if (!published) {
     // error string was set within the function
     if (client_info->request_type_support_->delete_data(sample) != DDS_RETCODE_OK) {
@@ -2415,10 +2429,14 @@ rmw_create_service(
     return NULL;
   }
 
-  const void * untyped_request_members = get_request_ptr(type_support->data, type_support->typesupport_identifier);
-  const void * untyped_response_members = get_response_ptr(type_support->data, type_support->typesupport_identifier);
-  std::string request_type_name = _create_type_name(untyped_request_members, "srv", type_support->typesupport_identifier);
-  std::string response_type_name = _create_type_name(untyped_response_members, "srv", type_support->typesupport_identifier);
+  const void * untyped_request_members = get_request_ptr(type_support->data,
+      type_support->typesupport_identifier);
+  const void * untyped_response_members = get_response_ptr(type_support->data,
+      type_support->typesupport_identifier);
+  std::string request_type_name = _create_type_name(untyped_request_members, "srv",
+      type_support->typesupport_identifier);
+  std::string response_type_name = _create_type_name(untyped_response_members, "srv",
+      type_support->typesupport_identifier);
 
   DDS_DomainParticipantQos participant_qos;
   DDS_ReturnCode_t status = participant->get_qos(participant_qos);
@@ -2446,7 +2464,8 @@ rmw_create_service(
     goto fail;
   }
 
-  request_type_code = _create_type_code(request_type_name, untyped_request_members, type_support->typesupport_identifier);
+  request_type_code = _create_type_code(request_type_name, untyped_request_members,
+      type_support->typesupport_identifier);
   if (!request_type_code) {
     // error string was set within the function
     goto fail;
@@ -2464,7 +2483,8 @@ rmw_create_service(
     DDS::DynamicDataTypeSupport, request_type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT)
   buf = nullptr;  // Only free the casted pointer; don't need the buf anymore.
 
-  response_type_code = _create_type_code(response_type_name, untyped_response_members, type_support->typesupport_identifier);
+  response_type_code = _create_type_code(response_type_name, untyped_response_members,
+      type_support->typesupport_identifier);
   if (!response_type_code) {
     // error string was set within the function
     goto fail;
@@ -2717,7 +2737,9 @@ rmw_take_request(
 
   connext::LoanedSamples<DDS::DynamicData> requests = replier->take_requests(1);
   if (requests.begin() != requests.end() && requests.begin()->info().valid_data) {
-    bool success = _take(&requests.begin()->data(), ros_request, service_info->untyped_request_members_, service_info->typesupport_identifier);
+    bool success = _take(
+      &requests.begin()->data(), ros_request, service_info->untyped_request_members_,
+      service_info->typesupport_identifier);
     if (!success) {
       // error string was set within the function
       return RMW_RET_ERROR;
@@ -2781,7 +2803,9 @@ rmw_take_response(
 
   connext::LoanedSamples<DDS::DynamicData> replies = requester->take_replies(1);
   if (replies.begin() != replies.end() && replies.begin()->info().valid_data) {
-    bool success = _take(&replies.begin()->data(), ros_response, client_info->untyped_response_members_, client_info->typesupport_identifier);
+    bool success = _take(
+      &replies.begin()->data(), ros_response, client_info->untyped_response_members_,
+      client_info->typesupport_identifier);
     if (!success) {
       // error string was set within the function
       return RMW_RET_ERROR;
@@ -2843,7 +2867,8 @@ rmw_send_response(
   DDS::WriteParams_t writeParams;
   connext::WriteSampleRef<DDS::DynamicData> response(*sample, writeParams);
 
-  bool published = _publish(sample, ros_response, service_info->untyped_response_members_, service_info->typesupport_identifier);
+  bool published = _publish(sample, ros_response, service_info->untyped_response_members_,
+      service_info->typesupport_identifier);
   if (!published) {
     // error string was set within the function
     if (service_info->response_type_support_->delete_data(sample) != DDS_RETCODE_OK) {
