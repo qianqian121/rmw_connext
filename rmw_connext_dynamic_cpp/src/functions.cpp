@@ -1138,11 +1138,6 @@ rmw_create_subscription(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
-    type support handle,
-    type_support->typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
-    return NULL)
 
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");
@@ -1160,12 +1155,6 @@ rmw_create_subscription(
     return NULL;
   }
 
-  auto members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-    type_support->data);
-  if (!members) {
-    RMW_SET_ERROR_MSG("members handle is null");
-    return NULL;
-  }
   std::string type_name = _create_type_name(
     type_support->data, "msg", type_support->typesupport_identifier);
 
@@ -1758,7 +1747,7 @@ rmw_destroy_subscription(rmw_node_t * node, rmw_subscription_t * subscription)
     RMW_SET_ERROR_MSG("members handle is null"); \
     return false; \
   } \
-  bool success = take<INTROSPECTION_TYPE(MessageMembers)>( \
+  bool success = _take( \
     &sub_dynamic_data, sub_ros_message, member->members_->data, typesupport); \
   status = dynamic_data->unbind_complex_member(sub_dynamic_data); \
   if (!success) { \
@@ -1777,7 +1766,7 @@ bool take(DDS_DynamicData * dynamic_data, void * ros_message,
   auto members = static_cast<const MembersType *>(untyped_members);
   if (!members) {
     RMW_SET_ERROR_MSG("members handle is null");
-    return NULL;
+    return false;
   }
 
   for (uint32_t i = 0; i < members->member_count_; ++i) {
@@ -2013,11 +2002,6 @@ rmw_create_client(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  RMW_CHECK_TYPE_IDENTIFIERS_MATCH(
-    type support handle,
-    type_support->typesupport_identifier,
-    rosidl_typesupport_introspection_cpp::typesupport_introspection_identifier,
-    return NULL)
 
   if (!qos_profile) {
     RMW_SET_ERROR_MSG("qos_profile is null");

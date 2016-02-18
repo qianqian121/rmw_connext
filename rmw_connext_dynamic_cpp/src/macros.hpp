@@ -263,6 +263,9 @@
         GET_STRING_VALUE(rosidl_generator_c__String, get_string, C_STRING_ASSIGN) \
       } else if (using_introspection_cpp_typesupport(typesupport)) { \
         GET_STRING_VALUE(std::string, get_string, CPP_STRING_ASSIGN) \
+      } else { \
+        RMW_SET_ERROR_MSG("Unknown typesupport identifier"); \
+        return false; \
       } \
       break; \
     case INTROSPECTION_TYPE(ROS_TYPE_MESSAGE): \
