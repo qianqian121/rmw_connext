@@ -1,7 +1,7 @@
 // generated from rosidl_typesupport_connext_c/resource/msg__type_support_c.cpp.em
 
 @##########################################################################
-@# EmPy template for generating <msg>__type_support.c files for Connext
+@# EmPy template for generating <msg>__type_support_c.cpp files for Connext
 @#
 @# Context:
 @#  - spec (rosidl_parser.MessageSpecification)
@@ -57,6 +57,8 @@ extern "C"
 {
 #endif
 
+#include "@(spec.base_type.pkg_name)/@(subfolder)/dds_connext_c/@(get_header_filename_from_msg_name(spec.msg_name))__type_support.h"
+
 // Forward declare the get type support function for this type.
 ROSIDL_GENERATOR_C_EXPORT_@(pkg)
 const rosidl_message_type_support_t *
@@ -104,8 +106,8 @@ __dds_msg_type_prefix = "{0}::{1}::dds_::{2}_".format(
 using __dds_msg_type = @(__dds_msg_type_prefix);
 using __ros_msg_type = @(pkg)__@(subfolder)__@(type);
 
-static bool
-register_type(void * untyped_participant, const char * type_name)
+bool
+@(spec.base_type.pkg_name)__@(spec.msg_name)__register_type(void * untyped_participant, const char * type_name)
 {
   if (!untyped_participant) {
     fprintf(stderr, "untyped participant handle is null\n");
@@ -145,8 +147,9 @@ register_type(void * untyped_participant, const char * type_name)
   return false;
 }
 
-static bool
-convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
+bool
+@(spec.base_type.pkg_name)__@(spec.msg_name)__convert_ros_to_dds(
+  const void * untyped_ros_message, void * untyped_dds_message)
 {
   if (!untyped_ros_message) {
     fprintf(stderr, "ros message handle is null\n");
@@ -239,8 +242,8 @@ convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
   return true;
 }
 
-static bool
-publish(void * dds_data_writer, const void * untyped_ros_message)
+bool
+@(spec.base_type.pkg_name)__@(spec.msg_name)__publish(void * dds_data_writer, const void * untyped_ros_message)
 {
   if (!dds_data_writer) {
     fprintf(stderr, "data writer handle is null\n");
@@ -255,7 +258,7 @@ publish(void * dds_data_writer, const void * untyped_ros_message)
   DDSDataWriter * topic_writer = static_cast<DDSDataWriter *>(dds_data_writer);
 
   __dds_msg_type dds_message;
-  if (!convert_ros_to_dds(ros_message, &dds_message)) {
+  if (!@(spec.base_type.pkg_name)__@(spec.msg_name)__convert_ros_to_dds(ros_message, &dds_message)) {
     return false;
   }
   @(spec.base_type.pkg_name)::@(subfolder)::dds_::@(spec.base_type.type)_DataWriter * data_writer =
@@ -327,8 +330,8 @@ publish(void * dds_data_writer, const void * untyped_ros_message)
   return false;
 }
 
-static bool
-convert_dds_to_ros(const void * untyped_dds_message, void * untyped_ros_message)
+bool
+@(spec.base_type.pkg_name)__@(spec.msg_name)__convert_dds_to_ros(const void * untyped_dds_message, void * untyped_ros_message)
 {
   if (!untyped_ros_message) {
     fprintf(stderr, "ros message handle is null\n");
@@ -428,8 +431,8 @@ else:
   return true;
 }
 
-static bool
-take(
+bool
+@(spec.base_type.pkg_name)__@(spec.msg_name)__take(
   void * dds_data_reader,
   bool ignore_local_publications,
   void * untyped_ros_message,
@@ -521,7 +524,7 @@ take(
   }
 
   if (!ignore_sample) {
-    if (!convert_dds_to_ros(&dds_messages[0], untyped_ros_message)) {
+    if (!@(spec.base_type.pkg_name)__@(spec.msg_name)__convert_dds_to_ros(&dds_messages[0], untyped_ros_message)) {
       goto finally;
     }
     *taken = true;
@@ -571,11 +574,11 @@ finally:
 static message_type_support_callbacks_t __callbacks = {
   "@(pkg)",  // package_name
   "@(msg)",  // message_name
-  register_type,  // register_type
-  publish,  // publish
-  take, // take
-  convert_ros_to_dds,  // convert_ros_to_dds
-  convert_dds_to_ros,  // convert_dds_to_ros
+  @(spec.base_type.pkg_name)__@(spec.msg_name)__register_type,  // register_type
+  @(spec.base_type.pkg_name)__@(spec.msg_name)__publish,  // publish
+  @(spec.base_type.pkg_name)__@(spec.msg_name)__take, // take
+  @(spec.base_type.pkg_name)__@(spec.msg_name)__convert_ros_to_dds,  // convert_ros_to_dds
+  @(spec.base_type.pkg_name)__@(spec.msg_name)__convert_dds_to_ros,  // convert_dds_to_ros
 };
 
 static rosidl_message_type_support_t __type_support = {
