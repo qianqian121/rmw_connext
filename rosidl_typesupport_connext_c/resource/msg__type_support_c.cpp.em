@@ -194,7 +194,10 @@ bool
       return false;
     }
     DDS_Long length = static_cast<DDS_Long>(size);
-    dds_message->@(field.name)_.ensure_length(length, length);
+    if (!dds_message->@(field.name)_.ensure_length(length, length)) {
+      fprintf(stderr, "Could not resize DDS sequence with 'ensure_length'\n");
+      return false;
+    }
 @[    end if]@
     for (DDS_Long i = 0; i < static_cast<DDS_Long>(size); ++i) {
 @[    if field.type.array_size]@
@@ -212,7 +215,8 @@ bool
         fprintf(stderr, "string not null-terminated\n");
         return false;
       }
-      dds_message->@(field.name)_[i] = str->data;
+      DDS_String_free(dds_message->@(field.name)_[i]);
+      dds_message->@(field.name)_[i] = DDS_String_dup(str->data);
 @[    elif field.type.type == 'bool']@
       dds_message->@(field.name)_[i] = 1 ? ros_i : 0;
 @[    elif field.type.is_primitive_type()]@
@@ -235,7 +239,8 @@ bool
       fprintf(stderr, "string not null-terminated\n");
       return false;
     }
-    dds_message->@(field.name)_ = str->data;
+    DDS_String_free(dds_message->@(field.name)_);
+    dds_message->@(field.name)_ = DDS_String_dup(str->data);
 @[  elif field.type.is_primitive_type()]@
     dds_message->@(field.name)_ = ros_message->@(field.name);
 @[  else]@

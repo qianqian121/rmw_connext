@@ -93,8 +93,12 @@ int64_t send_request__@(spec.srv_name)(
     @(spec.pkg_name)::srv::dds_::@(spec.srv_name)_Response_>;
   connext::WriteSample<
     @(spec.pkg_name)::srv::dds_::@(spec.srv_name)_Request_> request;
-  @(spec.pkg_name)__@(spec.srv_name)_Request__convert_ros_to_dds(
+  bool converted = @(spec.pkg_name)__@(spec.srv_name)_Request__convert_ros_to_dds(
     untyped_ros_request, static_cast<void*>(&request.data()));
+  if (!converted) {
+    fprintf(stderr, "Unable to convert request!\n");
+    return -1;
+  }
 
   RequesterType * requester = reinterpret_cast<RequesterType *>(untyped_requester);
 
@@ -154,7 +158,7 @@ bool take_request__@(spec.srv_name)(
 
   bool converted =
     @(spec.pkg_name)__@(spec.srv_name)_Request__convert_dds_to_ros(
-      static_cast<void *>(&request.data()), untyped_ros_request);
+      static_cast<const void *>(&request.data()), untyped_ros_request);
   if (!converted) {
     return false;
   }
@@ -194,7 +198,7 @@ bool take_response__@(spec.srv_name)(
 
   bool converted =
     @(spec.pkg_name)__@(spec.srv_name)_Response__convert_dds_to_ros(
-      static_cast<void *>(&response.data()), untyped_ros_response);
+      static_cast<const void *>(&response.data()), untyped_ros_response);
   return converted;
 }
 
