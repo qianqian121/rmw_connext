@@ -56,14 +56,16 @@ extern "C"
 #endif
 
 bool
-@(spec.base_type.pkg_name)__@(spec.msg_name)__register_type(void * untyped_participant, const char * type_name);
+@(spec.base_type.pkg_name)__@(spec.msg_name)__register_type(
+  void * untyped_participant, const char * type_name);
 
 bool
 @(spec.base_type.pkg_name)__@(spec.msg_name)__convert_ros_to_dds(
   const void * untyped_ros_message, void * untyped_dds_message);
 
 bool
-@(spec.base_type.pkg_name)__@(spec.msg_name)__publish(void * dds_data_writer, const void * untyped_ros_message);
+@(spec.base_type.pkg_name)__@(spec.msg_name)__publish(
+  void * dds_data_writer, const void * untyped_ros_message);
 
 bool
 @(spec.base_type.pkg_name)__@(spec.msg_name)__convert_dds_to_ros(
