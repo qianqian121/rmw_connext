@@ -147,8 +147,9 @@ rmw_create_publisher(
     RMW_SET_ERROR_MSG("type support handle is null");
     return NULL;
   }
-  if (type_support->typesupport_identifier != rosidl_typesupport_connext_cpp::typesupport_connext_identifier
-    && type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
+  if (type_support->typesupport_identifier !=
+    rosidl_typesupport_connext_cpp::typesupport_connext_identifier &&
+    type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
   {
     RMW_SET_ERROR_MSG("type support identifier did not match valid typesupports");
     return NULL;
@@ -448,8 +449,9 @@ rmw_create_subscription(const rmw_node_t * node,
     return NULL;
   }
 
-  if (type_support->typesupport_identifier != rosidl_typesupport_connext_cpp::typesupport_connext_identifier
-    && type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
+  if (type_support->typesupport_identifier !=
+    rosidl_typesupport_connext_cpp::typesupport_connext_identifier &&
+    type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
   {
     RMW_SET_ERROR_MSG("type support identifier did not match valid typesupports");
     return NULL;
@@ -849,8 +851,9 @@ rmw_create_client(
     return NULL;
   }
 
-  if (type_support->typesupport_identifier != rosidl_typesupport_connext_cpp::typesupport_connext_identifier
-    && type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
+  if (type_support->typesupport_identifier !=
+    rosidl_typesupport_connext_cpp::typesupport_connext_identifier &&
+    type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
   {
     RMW_SET_ERROR_MSG("type support identifier did not match valid typesupports");
     return NULL;
@@ -1082,8 +1085,9 @@ rmw_create_service(
     return NULL;
   }
 
-  if (type_support->typesupport_identifier != rosidl_typesupport_connext_cpp::typesupport_connext_identifier
-    && type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
+  if (type_support->typesupport_identifier !=
+    rosidl_typesupport_connext_cpp::typesupport_connext_identifier &&
+    type_support->typesupport_identifier != rosidl_typesupport_connext_c__identifier)
   {
     RMW_SET_ERROR_MSG("type support identifier did not match valid typesupports");
     return NULL;
