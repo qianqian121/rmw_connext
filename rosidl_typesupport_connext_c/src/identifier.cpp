@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// #include <rosidl_typesupport_connext_cpp/identifier.hpp>
+#include <rosidl_typesupport_connext_c/identifier.h>
 
 #include <rosidl_typesupport_connext_c/visibility_control.h>
 
@@ -24,7 +24,6 @@ extern "C"
 ROSIDL_TYPESUPPORT_CONNEXT_C_EXPORT
 const char *
   rosidl_typesupport_connext_c__identifier = "connext_static_c";
-  //rosidl_typesupport_connext_cpp::typesupport_connext_identifier;
 
 #if defined(__cplusplus)
 }
