@@ -58,8 +58,6 @@ extern "C"
 {
 #endif
 
-#include "@(pkg)/@(subfolder)/dds_connext_c/@(header_file_name)__type_support.h"
-
 // Forward declare the get type support function for this type.
 ROSIDL_GENERATOR_C_EXPORT_@(pkg)
 const rosidl_message_type_support_t *
