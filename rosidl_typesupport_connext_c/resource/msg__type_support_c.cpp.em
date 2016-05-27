@@ -146,8 +146,7 @@ register_type(void * untyped_participant, const char * type_name)
 }
 
 static bool
-convert_ros_to_dds(
-  const void * untyped_ros_message, void * untyped_dds_message)
+convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
 {
   if (!untyped_ros_message) {
     fprintf(stderr, "ros message handle is null\n");
