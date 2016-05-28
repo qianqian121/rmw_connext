@@ -203,8 +203,8 @@ convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
         fprintf(stderr, "string not null-terminated\n");
         return false;
       }
-      DDS_String_free(dds_message->@(field.name)_[i]);
-      dds_message->@(field.name)_[i] = DDS_String_dup(str->data);
+      DDS_String_free(dds_message->@(field.name)_[static_cast<DDS_Long>(i)]);
+      dds_message->@(field.name)_[static_cast<DDS_Long>(i)] = DDS_String_dup(str->data);
 @[    elif field.type.type == 'bool']@
       dds_message->@(field.name)_[i] = 1 ? ros_i : 0;
 @[    elif field.type.is_primitive_type()]@
@@ -273,23 +273,19 @@ publish(void * dds_data_writer, const void * untyped_ros_message)
 @[      if field.type.array_size]@
     DDS_Long size = static_cast<DDS_Long>(@(field.type.array_size));
     for (DDS_Long i = 0; i < size; ++i) {
-      DDS_String_free(dds_message.@(field.name)_[i]);
-      dds_message.@(field.name)_[i] =
-        DDS_String_dup(ros_message->@(field.name)[i].data);
+      dds_message.@(field.name)_[static_cast<DDS_Long>(i)] =
+        ros_message->@(field.name)[static_cast<DDS_Long>(i)].data;
     }
 @[      else]@
     DDS_Long size = dds_message.@(field.name)_.length();
     for (DDS_Long i = 0; i < size; ++i) {
-      DDS_String_free(dds_message.@(field.name)_[i]);
-      dds_message.@(field.name)_[i] =
-        DDS_String_dup(ros_message->@(field.name).data[i].data);
+      dds_message.@(field.name)_[static_cast<DDS_Long>(i)] =
+        ros_message->@(field.name).data[static_cast<DDS_Long>(i)].data;
     }
 @[      end if]@
   }
 @[    else]@
-  DDS_String_free(static_cast<char *>(dds_message.@(field.name)_));
-  dds_message.@(field.name)_ =
-    DDS_String_dup(ros_message->@(field.name).data);
+  dds_message.@(field.name)_ = ros_message->@(field.name).data;
 @[    end if]@
 @[  end if]@
 @[end for]@
