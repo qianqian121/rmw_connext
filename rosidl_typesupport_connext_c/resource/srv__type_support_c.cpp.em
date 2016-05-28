@@ -37,6 +37,8 @@
 #include <rosidl_typesupport_connext_c/visibility_control.h>
 // Provides the definition of the service_type_support_callbacks_t struct.
 #include <rosidl_typesupport_connext_cpp/service_type_support.h>
+// Provides the definition of the message_type_support_callbacks_t struct.
+#include <rosidl_typesupport_connext_cpp/message_type_support.h>
 
 @{req_header_file_name = get_header_filename_from_msg_name(spec.srv_name + '__request')}@
 @{res_header_file_name = get_header_filename_from_msg_name(spec.srv_name + '__response')}@
@@ -209,7 +211,7 @@ bool take_response__@(spec.srv_name)(
     ROSIDL_GET_TYPE_SUPPORT(@(spec.pkg_name), srv, @(spec.srv_name)_Response);
   const message_type_support_callbacks_t * callbacks =
     static_cast<const message_type_support_callbacks_t *>(ts->data);
-  bool converted = callbacks->dds_to_ros(
+  bool converted = callbacks->convert_dds_to_ros(
     static_cast<const void *>(&response.data()), untyped_ros_response);
   return converted;
 }
