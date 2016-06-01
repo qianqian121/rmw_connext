@@ -53,7 +53,7 @@
 // Re-use most of the functions from C++ typesupport
 #include "@(spec.pkg_name)/srv/dds_connext/@(get_header_filename_from_msg_name(spec.srv_name))__type_support.hpp"
 
-#include "@(spec.pkg_name)/msg/rosidl_generator_c__visibility_control.h"
+#include "@(spec.pkg_name)/msg/dds_connext_c/visibility_control.h"
 
 class DDSDomainParticipant;
 class DDSDataReader;
