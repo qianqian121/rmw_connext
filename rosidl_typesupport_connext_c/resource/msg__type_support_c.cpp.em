@@ -35,7 +35,6 @@ static_assert(USING_ROSIDL_TYPESUPPORT_CONNEXT_C, "expected Connext C message ty
 @{header_file_name = get_header_filename_from_msg_name(type)}@
 #include "@(pkg)/@(subfolder)/@(header_file_name)__struct.h"
 #include "@(pkg)/@(subfolder)/@(header_file_name)__functions.h"
-#include "@(pkg)/msg/dds_connext_c/visibility_control.h"
 
 #ifndef _WIN32
 # pragma GCC diagnostic push
@@ -587,7 +586,7 @@ static rosidl_message_type_support_t __type_support = {
   &__callbacks
 };
 
-ROSIDL_TYPESUPPORT_CONNEXT_C_EXPORT_@(spec.base_type.pkg_name)
+ROSIDL_GENERATOR_C_EXPORT_@(spec.base_type.pkg_name)
 const rosidl_message_type_support_t *
 ROSIDL_GET_TYPE_SUPPORT_FUNCTION(@(pkg), @(subfolder), @(msg))() {
   if (!__type_support.typesupport_identifier) {
