@@ -2,7 +2,7 @@
 // generated code does not contain a copyright notice
 
 @##########################################################################
-@# EmPy template for generating <msg>__type_support.c files for Connext
+@# EmPy template for generating <msg>__type_support_c.cpp files for Connext
 @#
 @# Context:
 @#  - spec (rosidl_parser.MessageSpecification)
@@ -58,12 +58,6 @@ extern "C"
 {
 #endif
 
-// Forward declare the get type support function for this type.
-ROSIDL_GENERATOR_C_EXPORT_@(pkg)
-const rosidl_message_type_support_t *
-  ROSIDL_GET_TYPE_SUPPORT_FUNCTION(@(pkg), @(subfolder), @(msg))(void);
-
-// include message dependencies
 @{
 includes = {}
 for field in spec.fields:
@@ -191,7 +185,10 @@ convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
       return false;
     }
     DDS_Long length = static_cast<DDS_Long>(size);
-    dds_message->@(field.name)_.ensure_length(length, length);
+    if (!dds_message->@(field.name)_.ensure_length(length, length)) {
+      fprintf(stderr, "Could not resize DDS sequence with 'ensure_length'\n");
+      return false;
+    }
 @[    end if]@
     for (DDS_Long i = 0; i < static_cast<DDS_Long>(size); ++i) {
 @[    if field.type.array_size]@
@@ -209,7 +206,8 @@ convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
         fprintf(stderr, "string not null-terminated\n");
         return false;
       }
-      dds_message->@(field.name)_[i] = str->data;
+      DDS_String_free(dds_message->@(field.name)_[static_cast<DDS_Long>(i)]);
+      dds_message->@(field.name)_[static_cast<DDS_Long>(i)] = DDS_String_dup(str->data);
 @[    elif field.type.type == 'bool']@
       dds_message->@(field.name)_[i] = 1 ? ros_i : 0;
 @[    elif field.type.is_primitive_type()]@
@@ -232,7 +230,8 @@ convert_ros_to_dds(const void * untyped_ros_message, void * untyped_dds_message)
       fprintf(stderr, "string not null-terminated\n");
       return false;
     }
-    dds_message->@(field.name)_ = str->data;
+    DDS_String_free(dds_message->@(field.name)_);
+    dds_message->@(field.name)_ = DDS_String_dup(str->data);
 @[  elif field.type.is_primitive_type()]@
     dds_message->@(field.name)_ = ros_message->@(field.name);
 @[  else]@
@@ -277,23 +276,19 @@ publish(void * dds_data_writer, const void * untyped_ros_message)
 @[      if field.type.array_size]@
     DDS_Long size = static_cast<DDS_Long>(@(field.type.array_size));
     for (DDS_Long i = 0; i < size; ++i) {
-      DDS_String_free(dds_message.@(field.name)_[i]);
-      dds_message.@(field.name)_[i] =
-        DDS_String_dup(ros_message->@(field.name)[i].data);
+      dds_message.@(field.name)_[static_cast<DDS_Long>(i)] =
+        ros_message->@(field.name)[static_cast<DDS_Long>(i)].data;
     }
 @[      else]@
     DDS_Long size = dds_message.@(field.name)_.length();
     for (DDS_Long i = 0; i < size; ++i) {
-      DDS_String_free(dds_message.@(field.name)_[i]);
-      dds_message.@(field.name)_[i] =
-        DDS_String_dup(ros_message->@(field.name).data[i].data);
+      dds_message.@(field.name)_[static_cast<DDS_Long>(i)] =
+        ros_message->@(field.name).data[static_cast<DDS_Long>(i)].data;
     }
 @[      end if]@
   }
 @[    else]@
-  DDS_String_free(static_cast<char *>(dds_message.@(field.name)_));
-  dds_message.@(field.name)_ =
-    DDS_String_dup(ros_message->@(field.name).data);
+  dds_message.@(field.name)_ = ros_message->@(field.name).data;
 @[    end if]@
 @[  end if]@
 @[end for]@
